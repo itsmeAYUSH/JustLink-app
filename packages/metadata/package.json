@@ -1,0 +1,30 @@
+{
+  "name": "@justlink/metadata",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fetches a URL safely and extracts Open Graph, Twitter and HTML meta information.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "undici": "^7.30.2"
+  },
+  "devDependencies": {
+    "@justlink/typescript-config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.1"
+  }
+}
