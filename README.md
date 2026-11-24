@@ -54,12 +54,13 @@ pnpm install
 
 ### 2. Create the database tables
 
-In the Supabase dashboard, open **SQL Editor** and run these two files, in this order:
+In the Supabase dashboard, open **SQL Editor** and run these files, in this order:
 
 1. [`supabase/migrations/20261124000000_create_links.sql`](supabase/migrations/20261124000000_create_links.sql)
 2. [`supabase/migrations/20261124010000_collections_tags_search.sql`](supabase/migrations/20261124010000_collections_tags_search.sql)
+3. [`supabase/migrations/20261124020000_trash.sql`](supabase/migrations/20261124020000_trash.sql): the Trash, and an hourly job (pg_cron) that deletes links 7 days after they were trashed
 
-If you already ran the first one, just run the second: it upgrades existing data in place.
+If you already ran some of them, run just the ones after: each upgrades existing data in place.
 
 Or, with the Supabase CLI:
 

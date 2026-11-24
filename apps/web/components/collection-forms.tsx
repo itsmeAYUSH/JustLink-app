@@ -1,29 +1,14 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createCollection, updateCollection, type CollectionState } from "@/app/actions";
+import { updateCollection, type CollectionState } from "@/app/actions";
 import { SubmitButton } from "./submit-button";
 
 const idle: CollectionState = { status: "idle" };
 const input =
   "rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950";
 
-export function NewCollectionForm() {
-  const [state, formAction] = useActionState(createCollection, idle);
-  return (
-    <form action={formAction} className="space-y-1.5 px-2 pt-2">
-      <div className="flex gap-1.5">
-        <input name="icon" defaultValue="📁" aria-label="Icon (emoji)" className={`${input} w-10 text-center`} />
-        <input name="name" required maxLength={60} placeholder="Collection name" className={`${input} min-w-0 flex-1`} />
-      </div>
-      <SubmitButton pendingText="Creating…" className="w-full py-1.5">
-        Create collection
-      </SubmitButton>
-      {state.status === "error" && <p className="text-xs text-red-600 dark:text-red-400">{state.message}</p>}
-    </form>
-  );
-}
-
+/** Renames a folder or changes its icon. */
 export function EditCollectionForm({ id, name, icon }: { id: string; name: string; icon: string }) {
   const [state, formAction] = useActionState(updateCollection, idle);
   return (

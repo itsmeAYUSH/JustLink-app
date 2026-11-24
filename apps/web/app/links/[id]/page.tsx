@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { cache } from "react";
-import { deleteLink, refreshLink } from "@/app/actions";
+import { refreshLink, restoreLink, trashLinkAndGoHome } from "@/app/actions";
+import { DeleteLinkButton } from "@/components/delete-link-button";
 import { FallbackImage } from "@/components/fallback-image";
 import { LinkActions } from "@/components/link-actions";
 import { Favicon, ImagePlaceholder } from "@/components/link-card";
@@ -11,7 +12,16 @@ import { LinkEditor } from "@/components/link-editor";
 import { SiteHeader } from "@/components/site-header";
 import { SubmitButton } from "@/components/submit-button";
 import { TagList } from "@/components/tag-list";
-import { displayDescription, displayTitle, formatDate, hostname, readMetaTags, safeColor } from "@/lib/links";
+import {
+  displayDescription,
+  displayTitle,
+  formatDate,
+  hostname,
+  readMetaTags,
+  safeColor,
+  trashCountdown,
+  trashExpiry,
+} from "@/lib/links";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
@@ -76,11 +86,42 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
       <SiteHeader email={userData.user?.email} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <Link
-          href={collection ? `/?collection=${collection.id}` : link.is_archived ? "/?filter=archived" : "/"}
+          href={
+            link.deleted_at
+              ? "/?filter=trash"
+              : collection
+                ? `/?collection=${collection.id}`
+                : link.is_archived
+                  ? "/?filter=archived"
+                  : "/"
+          }
           className="mb-6 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
         >
-          ← {collection ? `${collection.icon} ${collection.name}` : link.is_archived ? "Archive" : "All links"}
+          ←{" "}
+          {link.deleted_at
+            ? "🗑 Trash"
+            : collection
+              ? `${collection.icon} ${collection.name}`
+              : link.is_archived
+                ? "Archive"
+                : "All links"}
         </Link>
+
+        {link.deleted_at && (
+          <div
+            role="status"
+            className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-400/20 dark:bg-amber-950/40 dark:text-amber-100"
+          >
+            <p className="min-w-60 flex-1">
+              <strong className="font-semibold">This link is in the Trash.</strong> {trashCountdown(link.deleted_at)} (
+              {formatDate(trashExpiry(link.deleted_at).toISOString(), true)}). Restore it to keep it.
+            </p>
+            <form action={restoreLink}>
+              <input type="hidden" name="id" value={link.id} />
+              <SubmitButton pendingText="Restoring…">Restore</SubmitButton>
+            </form>
+          </div>
+        )}
 
         <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="aspect-[1.91/1] max-h-[420px] w-full overflow-hidden border-b border-zinc-100 dark:border-zinc-800">
@@ -141,13 +182,16 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
                   Refresh metadata
                 </SubmitButton>
               </form>
-              <form action={deleteLink}>
-                <input type="hidden" name="id" value={link.id} />
-                <input type="hidden" name="redirect" value="home" />
-                <SubmitButton variant="danger" pendingText="Deleting…">
-                  Delete
-                </SubmitButton>
-              </form>
+              {link.deleted_at ? (
+                <DeleteLinkButton id={link.id} title={displayTitle(link)} variant="button" redirectToTrash />
+              ) : (
+                <form action={trashLinkAndGoHome}>
+                  <input type="hidden" name="id" value={link.id} />
+                  <SubmitButton variant="danger" pendingText="Moving to Trash…">
+                    Move to Trash
+                  </SubmitButton>
+                </form>
+              )}
             </div>
           </div>
         </article>

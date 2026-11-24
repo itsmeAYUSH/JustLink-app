@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from("links")
       .select(EXPORT_COLUMNS)
+      .is("deleted_at", null) // The Trash isn't part of an export.
       .order("created_at", { ascending: false })
       .range(from, from + 999);
     if (error) return new Response(error.message, { status: 500 });

@@ -43,6 +43,8 @@ type LinkRow = {
   custom_description: string | null;
   is_favorite: boolean;
   is_archived: boolean;
+  /** Set while the link is in the Trash; it is purged 7 days later. */
+  deleted_at: string | null;
   search: unknown;
   created_at: string;
   updated_at: string;
@@ -95,6 +97,7 @@ export type Database = {
     Functions: {
       get_library_stats: { Args: Record<PropertyKey, never>; Returns: Json };
       get_shared_collection: { Args: { p_share_id: string }; Returns: Json };
+      purge_expired_trash: { Args: Record<PropertyKey, never>; Returns: number };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

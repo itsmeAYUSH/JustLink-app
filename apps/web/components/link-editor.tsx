@@ -71,7 +71,7 @@ export function LinkEditor({ link, collections }: Props) {
           />
         </label>
         <label className="space-y-1">
-          <span className="text-sm font-medium">Collection</span>
+          <span className="text-sm font-medium">Folder</span>
           <select name="collection_id" defaultValue={link.collection_id ?? ""} className={field}>
             <option value="">📥 Unsorted</option>
             {collections.map((collection) => (

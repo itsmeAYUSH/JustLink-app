@@ -7,7 +7,7 @@ type LinkUpdate = Database["public"]["Tables"]["links"]["Update"];
 
 /** Columns the dashboard needs. Skips the big ones (meta_tags, search vector). */
 export const LIST_COLUMNS =
-  "id, url, title, custom_title, description, custom_description, image, image_alt, favicon, site_name, og_type, theme_color, keywords, tags, note, is_favorite, is_archived, collection_id, fetch_status, fetch_error, created_at" as const;
+  "id, url, title, custom_title, description, custom_description, image, image_alt, favicon, site_name, og_type, theme_color, keywords, tags, note, is_favorite, is_archived, collection_id, fetch_status, fetch_error, created_at, deleted_at" as const;
 
 export type LinkListItem = Pick<
   Link,
@@ -32,7 +32,31 @@ export type LinkListItem = Pick<
   | "fetch_status"
   | "fetch_error"
   | "created_at"
+  | "deleted_at"
 >;
+
+/** How long a link stays in the Trash. Matches purge_expired_trash() in supabase/migrations. */
+export const TRASH_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Links trashed before this moment are past their 7 days (and about to be purged). */
+export function trashCutoff(now = Date.now()): string {
+  return new Date(now - TRASH_DAYS * DAY_MS).toISOString();
+}
+
+/** When a trashed link will be deleted for good. */
+export function trashExpiry(deletedAt: string): Date {
+  return new Date(new Date(deletedAt).getTime() + TRASH_DAYS * DAY_MS);
+}
+
+/** "Deletes in 3 days", "Deletes tomorrow", "Deletes within the hour"... */
+export function trashCountdown(deletedAt: string, now = Date.now()): string {
+  const left = trashExpiry(deletedAt).getTime() - now;
+  if (left <= 60 * 60 * 1000) return "Deletes within the hour";
+  if (left < DAY_MS) return `Deletes in ${Math.ceil(left / (60 * 60 * 1000))} hours`;
+  const days = Math.ceil(left / DAY_MS);
+  return days === 1 ? "Deletes tomorrow" : `Deletes in ${days} days`;
+}
 
 /** Maps scraper output onto the `links` table columns. Never touches the user's own fields. */
 export function metadataToColumns(meta: LinkMetadata): LinkUpdate {
@@ -137,6 +161,7 @@ export type LibraryStats = {
   unsorted: number;
   archived: number;
   pending: number;
+  trash: number;
   collections: Record<string, number>;
   tags: { tag: string; count: number }[];
 };
@@ -149,6 +174,7 @@ export function readStats(value: Json | null): LibraryStats {
     unsorted: Number(stats.unsorted ?? 0),
     archived: Number(stats.archived ?? 0),
     pending: Number(stats.pending ?? 0),
+    trash: Number(stats.trash ?? 0),
     collections: stats.collections ?? {},
     tags: Array.isArray(stats.tags) ? stats.tags : [],
   };

@@ -205,3 +205,53 @@ describe("deleting a collection", () => {
     });
   });
 });
+
+describe("trash", () => {
+  const shared = (id: string) =>
+    as(null, async () => (await rows<{ c: any }>(`select public.get_shared_collection($1) as c`, [id]))[0]!.c);
+  const stats = async () =>
+    (await rows<{ stats: Record<string, unknown> }>(`select public.get_library_stats() as stats`))[0]!.stats;
+
+  it("leaves trashed links out of the sidebar counts and shared collections", async () => {
+    const shareId = await as(A, async () => {
+      const [created] = await rows<{ id: string; share_id: string }>(
+        `insert into public.collections (name, is_public) values ('Shared', true) returning id, share_id`,
+      );
+      await db.query(`update public.links set collection_id = $1 where url_normalized = 'react.dev'`, [created!.id]);
+      expect(await stats()).toMatchObject({ favorites: 1, trash: 0, collections: { [created!.id]: 1 } });
+
+      await db.exec(`update public.links set deleted_at = now() where url_normalized = 'react.dev'`);
+      expect(await stats()).toMatchObject({ favorites: 0, trash: 1, collections: {}, tags: [] });
+      return created!.share_id;
+    });
+    expect((await shared(shareId)).links).toEqual([]);
+  });
+
+  it("keeps everything on a trashed link, so restoring brings it all back", async () => {
+    await as(A, async () => {
+      await db.exec(`update public.links set deleted_at = null where url_normalized = 'react.dev'`);
+      const [link] = await rows<{ note: string; tags: string[]; is_favorite: boolean }>(
+        `select note, tags, is_favorite from public.links where url_normalized = 'react.dev'`,
+      );
+      expect(link).toEqual({ note: "Great reference", tags: ["frontend", "docs"], is_favorite: true });
+      expect(await stats()).toMatchObject({ favorites: 1, trash: 0 });
+    });
+  });
+
+  it("purges links trashed over 7 days ago, and only the caller's own", async () => {
+    await as(B, () => db.exec(`update public.links set deleted_at = now() - interval '8 days'`));
+    await as(A, async () => {
+      await db.exec(`update public.links set deleted_at = now() - interval '6 days' where url_normalized = 'react.dev'`);
+      await db.exec(`update public.links set deleted_at = now() - interval '8 days' where url_normalized = 'vitejs.dev'`);
+      const [{ purged }] = await rows<{ purged: number }>(`select public.purge_expired_trash() as purged`);
+      expect(purged).toBe(1);
+      expect(await rows(`select url_normalized from public.links where deleted_at is not null`)).toEqual([
+        { url_normalized: "react.dev" },
+      ]);
+    });
+    // B's expired link waits for B (or the scheduled job, which runs as the owner).
+    expect(await rows(`select url from public.links where user_id = $1`, [B])).toHaveLength(1);
+    await rows(`select public.purge_expired_trash()`);
+    expect(await rows(`select url from public.links where user_id = $1`, [B])).toEqual([]);
+  });
+});

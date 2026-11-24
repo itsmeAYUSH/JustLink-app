@@ -35,7 +35,7 @@ const getShared = cache(async (shareId: string): Promise<SharedCollection | null
 
 export async function generateMetadata({ params }: PageProps<"/s/[shareId]">): Promise<Metadata> {
   const shared = await getShared((await params).shareId);
-  if (!shared) return { title: "Collection not found" };
+  if (!shared) return { title: "Folder not found" };
   return {
     title: `${shared.icon} ${shared.name}`,
     description: `${shared.links.length} links shared with ${APP_NAME}`,
@@ -49,7 +49,7 @@ export default async function SharedCollectionPage({ params }: PageProps<"/s/[sh
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
       <header className="mb-8">
-        <p className="text-sm text-zinc-500">Shared collection</p>
+        <p className="text-sm text-zinc-500">Shared folder</p>
         <h1 className="text-3xl font-semibold tracking-tight">
           {shared.icon} {shared.name}
         </h1>

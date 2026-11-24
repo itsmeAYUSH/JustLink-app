@@ -3,7 +3,7 @@
  * so every view is linkable, survives reloads and works without client JS.
  */
 export type View = "grid" | "list";
-export type Scope = "all" | "favorites" | "unsorted" | "archived";
+export type Scope = "all" | "favorites" | "unsorted" | "archived" | "trash";
 
 export type Filters = {
   scope: Scope;
@@ -17,7 +17,7 @@ export type Filters = {
 type SearchParams = Record<string, string | string[] | undefined>;
 
 const UUID = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
-const SCOPES: Scope[] = ["all", "favorites", "unsorted", "archived"];
+const SCOPES: Scope[] = ["all", "favorites", "unsorted", "archived", "trash"];
 
 function first(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";

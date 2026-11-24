@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { addLink, type AddLinkState } from "@/app/actions";
 import type { Collection } from "@/lib/links";
+import { extractUrls, MAX_LINKS_PER_PASTE } from "@/lib/paste";
 import { SubmitButton } from "./submit-button";
 
 const initialState: AddLinkState = { status: "idle" };
 
+/**
+ * Saves one link, or several at once: paste "https://a.com https://b.com …" (or one per
+ * line) and each is saved as its own link.
+ */
 export function AddLinkForm({
   collections,
   defaultCollection,
@@ -19,33 +24,67 @@ export function AddLinkForm({
   initialUrl?: string;
 }) {
   const [state, formAction] = useActionState(addLink, initialState);
-  const value = state.status === "error" ? state.url : state.status === "idle" ? initialUrl : "";
+  const [text, setText] = useState(initialUrl);
+
+  // After each save: clear the box on success, keep what was typed when it failed.
+  const [handledState, setHandledState] = useState(state);
+  if (state !== handledState) {
+    setHandledState(state);
+    setText(state.status === "error" ? (state.url ?? "") : "");
+  }
+
+  const { urls, duplicates } = extractUrls(text);
+  const many = urls.length > 1;
+  const tooMany = urls.length > MAX_LINKS_PER_PASTE;
+
+  /** Several links pasted at once go one per line, so it's clear they'll be saved separately. */
+  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const found = extractUrls(event.clipboardData.getData("text/plain")).urls;
+    if (found.length < 2) return; // One link (or none): paste as usual.
+    event.preventDefault();
+    const box = event.currentTarget;
+    const before = text.slice(0, box.selectionStart).trimEnd();
+    const after = text.slice(box.selectionEnd).trimStart();
+    setText([before, found.join("\n"), after].filter(Boolean).join("\n"));
+  }
+
+  /** Enter saves, like a one-line input; Shift+Enter starts a new line. */
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  }
 
   return (
     <form action={formAction} className="space-y-2">
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
         <label htmlFor="url" className="sr-only">
-          URL
+          Links to save
         </label>
-        <input
+        <textarea
           id="url"
           name="url"
-          type="text"
           inputMode="url"
           autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
           required
           autoFocus={!!initialUrl}
-          placeholder="Paste a link, e.g. github.com/vercel/next.js"
-          // React resets the form after each submit; keep the text when saving failed.
-          defaultValue={value}
-          key={`${state.status}-${state.url ?? ""}-${state.message ?? ""}`}
-          className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-zinc-800"
+          rows={Math.min(6, Math.max(1, text.split("\n").length))}
+          placeholder="Paste a link, or several at once separated by spaces or new lines"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          onPaste={handlePaste}
+          onKeyDown={handleKeyDown}
+          aria-describedby={many ? "url-summary" : undefined}
+          className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm leading-5 outline-none placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-zinc-800"
         />
         <select
           name="collection_id"
           defaultValue={defaultCollection ?? ""}
           key={defaultCollection ?? "none"}
-          aria-label="Collection"
+          aria-label="Folder"
           className="rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 sm:max-w-44"
         >
           <option value="">📥 Unsorted</option>
@@ -55,8 +94,35 @@ export function AddLinkForm({
             </option>
           ))}
         </select>
-        <SubmitButton pendingText="Fetching preview…">Save link</SubmitButton>
+        <SubmitButton
+          pendingText={many ? `Saving ${urls.length} links…` : "Fetching preview…"}
+          disabled={tooMany}
+          className="whitespace-nowrap"
+        >
+          {many ? `Save ${urls.length} links` : "Save link"}
+        </SubmitButton>
       </div>
+
+      {many && (
+        <p id="url-summary" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span
+            className={`rounded-full px-2.5 py-0.5 font-medium ${
+              tooMany
+                ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200"
+            }`}
+          >
+            {urls.length} links found
+          </span>
+          <span className="text-zinc-500 dark:text-zinc-400">
+            {tooMany
+              ? `Paste up to ${MAX_LINKS_PER_PASTE} at a time, or use Import / Export for longer lists.`
+              : "Each is saved as its own link; previews load in the background."}
+            {!tooMany && duplicates > 0 && ` ${duplicates} duplicate${duplicates === 1 ? " is" : "s are"} skipped.`}
+          </span>
+        </p>
+      )}
+
       <p
         aria-live="polite"
         className={`min-h-5 text-sm ${

@@ -45,6 +45,7 @@ export async function processPendingLinks(
       .from("links")
       .select("id, url, title, description")
       .eq("fetch_status", "pending")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(batchSize);
     if (!batch?.length) break;

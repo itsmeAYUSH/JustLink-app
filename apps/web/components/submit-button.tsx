@@ -23,6 +23,7 @@ export function SubmitButton({
   pendingText,
   variant = "primary",
   className = "",
+  disabled = false,
   ...props
 }: Props) {
   const { pending, data } = useFormStatus();
@@ -32,8 +33,8 @@ export function SubmitButton({
   return (
     <button
       type="submit"
-      disabled={pending}
-      aria-disabled={pending}
+      disabled={pending || disabled}
+      aria-disabled={pending || disabled}
       className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
       {...props}
     >

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { sectionHref, type Filters } from "@/lib/filters";
 import type { Collection, LibraryStats } from "@/lib/links";
-import { NewCollectionForm } from "./collection-forms";
+import { NewFolderButton } from "./folders";
 
 function Item({
   href,
@@ -55,8 +55,9 @@ export function Sidebar({
       <Item href={sectionHref(filters, { scope: "favorites" })} active={inSection && filters.scope === "favorites"} icon="★" label="Favorites" count={stats.favorites} />
       <Item href={sectionHref(filters, { scope: "unsorted" })} active={inSection && filters.scope === "unsorted"} icon="📥" label="Unsorted" count={stats.unsorted} />
       <Item href={sectionHref(filters, { scope: "archived" })} active={inSection && filters.scope === "archived"} icon="🗄" label="Archive" count={stats.archived} />
+      <Item href={sectionHref(filters, { scope: "trash" })} active={inSection && filters.scope === "trash"} icon="🗑" label="Trash" count={stats.trash} />
 
-      <Heading>Collections</Heading>
+      <Heading>Folders</Heading>
       {collections.map((collection) => (
         <Item
           key={collection.id}
@@ -67,12 +68,7 @@ export function Sidebar({
           count={stats.collections[collection.id] ?? 0}
         />
       ))}
-      <details className="group">
-        <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md px-2 py-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-          <span className="w-5 text-center">＋</span> New collection
-        </summary>
-        <NewCollectionForm />
-      </details>
+      <NewFolderButton />
 
       {stats.tags.length > 0 && (
         <>
