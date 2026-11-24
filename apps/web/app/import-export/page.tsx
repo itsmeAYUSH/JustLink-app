@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { profileFromUser } from "@/lib/profile";
 import { APP_NAME } from "@/lib/brand";
 import { siteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
@@ -34,7 +35,7 @@ export default async function ImportExportPage() {
 
   return (
     <>
-      <SiteHeader email={userData.user?.email} />
+      <SiteHeader user={profileFromUser(userData.user)} />
       <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-8">
         <h1 className="text-2xl font-semibold tracking-tight">Import &amp; export</h1>
 

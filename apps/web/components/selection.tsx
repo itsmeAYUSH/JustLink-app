@@ -2,6 +2,7 @@
 
 import { createContext, use, useActionState, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { deleteLinksForever, restoreLinks, trashLinks, type LinksActionState } from "@/app/actions";
+import { hasExtension, openTabsWithExtension } from "@/lib/extension-bridge";
 import { DeleteDialog } from "./delete-dialog";
 import { AlertIcon, CheckIcon, CheckSquareIcon, ExternalLinkIcon, RestoreIcon, SpinnerIcon, TrashIcon, XIcon } from "./icons";
 import { MoveToFolderButton } from "./folders";
@@ -257,8 +258,22 @@ function BulkActionBar({
   const shown = selected.slice(0, 3);
   const busy = working || deleting;
 
-  function openTabs() {
+  // Ask once whether the extension is installed, so "Open" can use it straight away.
+  useEffect(() => {
+    void hasExtension();
+  }, []);
+
+  async function openTabs() {
     const toOpen = stillBlocked.length > 0 ? stillBlocked : selected;
+
+    // The JustLink extension can open them all at once; a website gets one or two.
+    const opened = await openTabsWithExtension(toOpen.map((item) => item.url));
+    if (opened !== null) {
+      setBlockedIds([]);
+      toast.show({ message: opened === 1 ? "Opened 1 tab" : `Opened ${opened} tabs` });
+      return;
+    }
+
     const blocked: string[] = [];
     for (const item of toOpen) {
       // Not "noopener" in the features: with it, window.open always returns null and blocked tabs can't be told apart.
@@ -307,7 +322,7 @@ function BulkActionBar({
               <span>
                 Your browser blocked {stillBlocked.length === 1 ? "1 tab" : `${stillBlocked.length} tabs`}. Click the
                 blocked pop-up icon at the right of the address bar, choose <strong>Always allow</strong> for this site,
-                then press <strong>Open</strong> again.
+                then press <strong>Open</strong> again. With the JustLink browser extension, they all open at once.
               </span>
             )}
           </div>
@@ -346,7 +361,7 @@ function BulkActionBar({
           </button>
           <button
             type="button"
-            onClick={openTabs}
+            onClick={() => void openTabs()}
             disabled={count === 0}
             title="Open each selected link in a new tab"
             className={`${barButton} text-zinc-700 hover:bg-zinc-100 focus-visible:ring-indigo-500/40 dark:text-zinc-200 dark:hover:bg-zinc-800`}

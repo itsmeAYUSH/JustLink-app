@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 import { getSupabaseEnv } from "./env";
 
-// /s/<share_id> are public shared collections.
-const PUBLIC_PATHS = ["/login", "/auth", "/s"];
+// /s/<share_id> are public shared collections. /api/extension answers signed-out
+// requests itself, with JSON the extension can read, instead of a redirect to /login.
+const PUBLIC_PATHS = ["/login", "/auth", "/s", "/api/extension"];
 
 /**
  * Runs on every request (see /proxy.ts): refreshes the Supabase session cookie

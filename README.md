@@ -7,12 +7,15 @@ Save URLs and see everything about them: Open Graph image, title, description, s
 - **Organize:** collections, your own tags (with the page's keywords offered as suggestions), favorites and an archive.
 - **Edit and annotate:** your own title, description and notes. These are kept apart from the page's metadata, so refreshing a preview never overwrites them.
 - **Search:** full-text search over titles, descriptions, tags, notes and URLs, with web-search syntax: `"exact phrase"`, `-exclude`, `or`, and `#tag`.
-- **Grid and list views**, with pagination.
+- **Grid and list views**, with pagination, and an **Images** switch that shows a plain placeholder instead of preview images.
+- **Locked folders:** choose which folders to lock on the profile page, with a 4-digit PIN. Like a password-protected folder, it asks for the PIN every time it's opened and locks again as soon as you leave it (or close the tab). Its links are hidden everywhere else (All links, search, tags, counts), and can't be added, moved or removed without the PIN. Row Level Security enforces it in the database, 5 wrong tries pause PIN entry, and a forgotten PIN can be removed after signing in again with the password. It's a privacy lock for a shared or unattended device, not encryption.
 - **Duplicate detection:** `http`/`https`, `www.`, trailing slashes, query-parameter order and tracking parameters (`utm_*`, `fbclid`, `gclid`, …) are ignored when checking for duplicates, and tracking parameters are removed before saving.
 - **Import** a bookmarks export from Chrome, Edge, Firefox, Safari, Raindrop, Pocket or linkding, or a pasted list of URLs. Folders become collections, and tags and save dates are kept. Previews are fetched in the background.
 - **Export** as a bookmarks HTML file (works in any browser) or as JSON.
-- **Share** a collection through a public, read-only link. Notes are never shared.
-- **Bookmarklet** to save the page you're on.
+- **Share** a folder through a public, read-only link (from the ⋯ menu next to its name, which also renames and deletes it). Notes are never shared.
+- **Profile page:** profile photo (cropped in the browser, stored in Supabase Storage), name, email change (confirmed by email), password change (checks the current one), and the locked-folder PIN: set, change, remove, lock now, or forgot.
+- **Browser extension** for Chrome and Edge: save the page you're on in one click (or Alt+Shift+S, or right-click), file it into a folder, and open many selected links as tabs at once. See [Browser extension](#6-browser-extension-optional).
+- **Bookmarklet** to save the page you're on, for browsers without the extension.
 
 Why these features: see [docs/competitor-research.md](docs/competitor-research.md), a teardown of linksaver.in, Raindrop.io, Linkwarden, Karakeep and linkding.
 
@@ -21,6 +24,7 @@ Why these features: see [docs/competitor-research.md](docs/competitor-research.m
 ```
 justlink/
 ├── apps/
+│   ├── extension/             Chrome/Edge extension (Manifest V3, plain TypeScript): save, file, open tabs
 │   └── web/                   Next.js app
 │       ├── app/
 │       │   ├── page.tsx           Dashboard: sidebar, search, filters, grid/list, add link
@@ -30,6 +34,7 @@ justlink/
 │       │   ├── export/            Download route (HTML / JSON)
 │       │   ├── s/[shareId]/       Public shared collection (no login needed)
 │       │   ├── login/             Email/password sign-in and sign-up
+│       │   ├── api/extension/     JSON API for the browser extension (session, look up, save, update)
 │       │   └── auth/confirm/      Email confirmation callback
 │       ├── lib/                   Supabase clients, URL filters, background fetching
 │       └── proxy.ts               Refreshes the session and protects every route
@@ -59,6 +64,9 @@ In the Supabase dashboard, open **SQL Editor** and run these files, in this orde
 1. [`supabase/migrations/20261124000000_create_links.sql`](supabase/migrations/20261124000000_create_links.sql)
 2. [`supabase/migrations/20261124010000_collections_tags_search.sql`](supabase/migrations/20261124010000_collections_tags_search.sql)
 3. [`supabase/migrations/20261124020000_trash.sql`](supabase/migrations/20261124020000_trash.sql): the Trash, and an hourly job (pg_cron) that deletes links 7 days after they were trashed
+4. [`supabase/migrations/20261124030000_locked_folders.sql`](supabase/migrations/20261124030000_locked_folders.sql): locked folders, the PIN and the database rules that hide their links
+5. [`supabase/migrations/20261124040000_profile.sql`](supabase/migrations/20261124040000_profile.sql): the `avatars` storage bucket for profile photos, and removing a PIN you know
+6. [`supabase/migrations/20261124050000_folder_pin_per_visit.sql`](supabase/migrations/20261124050000_folder_pin_per_visit.sql): a locked folder opens for one visit and locks again when you leave it
 
 If you already ran some of them, run just the ones after: each upgrades existing data in place.
 
@@ -101,6 +109,27 @@ pnpm dev
 ```
 
 Open http://localhost:3000, create an account and paste a link.
+
+### 6. Browser extension (optional)
+
+```bash
+pnpm --filter extension build
+```
+
+Then in Chrome or Edge open `chrome://extensions` (`edge://extensions`), switch on **Developer mode**, click **Load unpacked** and pick `apps/extension/dist`. Pin the JustLink icon to the toolbar.
+
+- **Sign in once on the website.** The extension uses that same session, so it has no sign-in of its own.
+- **Click the icon** (or press Alt+Shift+S) on any page. Nothing is saved until you press **Save**: first pick a folder (none by default: it just goes into All links; press 1–9 to pick one, or type a new folder name), adjust the title, and add tags or a note if you like. A page you saved before opens with its folder, tags and note, ready to **Update**. **Ctrl+Enter** (⌘+Enter on a Mac) saves from anywhere in the popup. Right-click a page or a link for a quick **Save to JustLink**, with no folder.
+- **Better previews:** the extension sends the page's `<head>` as your browser sees it, so pages behind bot checks or a login get their real title and image.
+- **Open selected links as tabs:** with the extension installed, **Open** in the dashboard's selection bar opens every link at once, with no pop-up blocking.
+
+For your live site, build it for that address (the extension only gets access to that one site):
+
+```bash
+JUSTLINK_APP_URL=https://your-domain.com pnpm --filter extension build
+```
+
+After changing the extension's code, run the build again and click the reload icon on its card in `chrome://extensions`. To work on the popup's design without reloading, `pnpm --filter extension preview` shows every popup state with sample data at http://localhost:4599/preview/.
 
 ## Scripts
 

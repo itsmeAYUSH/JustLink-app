@@ -106,6 +106,16 @@ export const ImageIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const ImageOffIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M8.5 3H18a3 3 0 0 1 3 3v9.5" />
+    <path d="M21 21H6a3 3 0 0 1-3-3V6" />
+    <path d="m21 15-3.5-3.5" />
+    <path d="m5 21 7-7" />
+    <path d="m3 3 18 18" />
+  </Icon>
+);
+
 export const SearchIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="11" cy="11" r="7" />
@@ -118,6 +128,35 @@ export const ImportIcon = (props: IconProps) => (
     <path d="M12 3v12" />
     <path d="m7 10 5 5 5-5" />
     <path d="M5 21h14" />
+  </Icon>
+);
+
+export const MoreIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="5" cy="12" r="1.3" fill="currentColor" />
+    <circle cx="12" cy="12" r="1.3" fill="currentColor" />
+    <circle cx="19" cy="12" r="1.3" fill="currentColor" />
+  </Icon>
+);
+
+export const PencilIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16Z" />
+    <path d="m13.5 6.5 4 4" />
+  </Icon>
+);
+
+export const CopyIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="9" y="9" width="11" height="11" rx="2.5" />
+    <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+  </Icon>
+);
+
+export const UnlockIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="4" y="11" width="16" height="10" rx="2.5" />
+    <path d="M8 11V7a4 4 0 0 1 7.5-2" />
   </Icon>
 );
 

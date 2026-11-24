@@ -1,9 +1,15 @@
 /**
- * Folders are the `collections` table: each link is in at most one folder, or "Unsorted".
+ * Folders are the `collections` table: each link is in at most one folder, or in none ("No folder").
  * Ready-made folders let people start organizing in one click.
  */
 
-export type Folder = { id: string; name: string; icon: string };
+export type Folder = {
+  id: string;
+  name: string;
+  icon: string;
+  /** Locked with the PIN: its links are hidden until the PIN is entered. */
+  locked?: boolean;
+};
 
 export type FolderPreset = { name: string; icon: string; hint: string };
 

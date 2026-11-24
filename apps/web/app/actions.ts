@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { processPendingLinks, scrape } from "@/lib/library";
+import { resolveFolder, saveLink } from "@/lib/link-service";
 import { displayTitle, parseTags } from "@/lib/links";
 import { FOLDER_PRESETS, folderKey, type Folder } from "@/lib/folders";
 import { extractUrls, MAX_LINKS_PER_PASTE } from "@/lib/paste";
@@ -32,6 +33,9 @@ function collectionId(formData: FormData): string | null {
   return UUID.test(value) ? value : null;
 }
 
+/** When a change touched nothing: most likely a locked folder whose 10 minutes ran out. */
+const LOCKED_AGAIN = "Nothing changed. If these links are in a locked folder, it may have locked again: enter your PIN and try once more.";
+
 function refresh(linkId?: string) {
   revalidatePath("/");
   if (linkId) revalidatePath(`/links/${linkId}`);
@@ -54,12 +58,10 @@ export async function addLink(_prev: AddLinkState, formData: FormData): Promise<
   const { urls } = extractUrls(raw);
   if (urls.length > 1) return addManyLinks(raw, urls, formData);
 
-  let url: string;
-  let key: string;
+  // Words around a single link ("read this: https://…") are ignored. Check the URL before
+  // signing in, so a typo is reported straight away.
   try {
-    // Words around a single link ("read this: https://…") are ignored.
-    url = normalizeUrl(urls[0] ?? raw);
-    key = urlKey(url);
+    normalizeUrl(urls[0] ?? raw);
   } catch (error) {
     return {
       status: "error",
@@ -69,43 +71,26 @@ export async function addLink(_prev: AddLinkState, formData: FormData): Promise<
   }
 
   const { supabase, user } = await requireUser();
+  const result = await saveLink(supabase, user.id, { url: urls[0] ?? raw, collectionId: collectionId(formData) });
 
-  // Same page, different spelling (http vs https, www, utm_*, trailing slash...)?
-  const { data: existing } = await supabase
-    .from("links")
-    .select("id, title, url, deleted_at")
-    .eq("url_normalized", key)
-    .maybeSingle();
-  if (existing?.deleted_at) {
-    // Saving it again means they want it back: restore it, notes and tags included.
-    const { error } = await supabase.from("links").update({ deleted_at: null }).eq("id", existing.id);
-    if (error) return { status: "error", message: error.message, url: raw };
-    refresh(existing.id);
-    return { status: "success", message: `Restored “${displayTitle(existing)}” from the Trash` };
+  switch (result.status) {
+    case "error":
+      return { status: "error", message: result.message, url: raw };
+    case "exists":
+      return { status: "error", message: "You've already saved this link.", url: raw, existingId: result.link.id };
+    case "restored":
+      // Saving it again means they want it back: restored with its notes and tags.
+      refresh(result.link.id);
+      return { status: "success", message: `Restored “${displayTitle(result.link)}” from the Trash` };
+    case "saved":
+      refresh();
+      return {
+        status: "success",
+        message: result.link.fetch_error
+          ? `Saved, but no preview: ${result.link.fetch_error}`
+          : `Saved “${displayTitle(result.link)}”`,
+      };
   }
-  if (existing) {
-    return { status: "error", message: "You've already saved this link.", url: raw, existingId: existing.id };
-  }
-
-  const columns = await scrape(url);
-  const { data: link, error } = await supabase
-    .from("links")
-    .insert({ ...columns, url, url_normalized: key, user_id: user.id, collection_id: collectionId(formData) })
-    .select("title, url, fetch_error")
-    .single();
-
-  if (error) {
-    const message = error.code === "23505" ? "You've already saved this link." : error.message;
-    return { status: "error", message, url: raw };
-  }
-
-  refresh();
-  return {
-    status: "success",
-    message: link.fetch_error
-      ? `Saved, but no preview: ${link.fetch_error}`
-      : `Saved “${displayTitle(link)}”`,
-  };
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -296,6 +281,7 @@ export async function trashLinks(_prev: LinksActionState, formData: FormData): P
     .in("id", ids)
     .is("deleted_at", null);
   if (error) return { error: `Couldn't move ${ids.length === 1 ? "this link" : "these links"} to the Trash: ${error.message}` };
+  if (count === 0) return { error: LOCKED_AGAIN };
 
   refresh();
   for (const id of ids) revalidatePath(`/links/${id}`);
@@ -442,7 +428,7 @@ export async function updateCollection(_prev: CollectionState, formData: FormDat
 export type MoveLinksState = { error?: string; count?: number; folder?: Folder | null } | null;
 
 /**
- * Moves links into a folder: "folder" is its id ("" for Unsorted), or "new_folder" names
+ * Moves links into a folder: "folder" is its id ("" for no folder), or "new_folder" names
  * a folder to create first (an existing one with that name is reused).
  */
 export async function moveLinks(_prev: MoveLinksState, formData: FormData): Promise<MoveLinksState> {
@@ -450,38 +436,22 @@ export async function moveLinks(_prev: MoveLinksState, formData: FormData): Prom
   if (!Array.isArray(ids)) return ids;
   const { supabase, user } = await requireUser();
 
-  let folder: Folder | null = null;
-  const newName = str(formData, "new_folder").replace(/\s+/g, " ").slice(0, 60);
-  if (newName) {
-    const { data: folders } = await supabase.from("collections").select("id, name, icon");
-    folder = folders?.find((item) => folderKey(item.name) === folderKey(newName)) ?? null;
-    if (!folder) {
-      const preset = FOLDER_PRESETS.find((item) => folderKey(item.name) === folderKey(newName));
-      const { data, error } = await supabase
-        .from("collections")
-        .insert({ name: newName, icon: preset?.icon ?? "📁", user_id: user.id })
-        .select("id, name, icon")
-        .single();
-      if (error) return { error: `Couldn't create the folder: ${error.message}` };
-      folder = data;
-    }
-  } else {
-    const id = str(formData, "folder");
-    if (id) {
-      const { data } = UUID.test(id)
-        ? await supabase.from("collections").select("id, name, icon").eq("id", id).maybeSingle()
-        : { data: null };
-      if (!data) return { error: "That folder can't be found. Reload the page and try again." };
-      folder = data;
-    }
-  }
+  const target = await resolveFolder(supabase, user.id, {
+    folderId: str(formData, "folder"),
+    newFolderName: str(formData, "new_folder"),
+  });
+  if ("error" in target) return { error: target.error };
+  const { folder } = target;
 
-  // Row Level Security limits this to the user's own links, and their own folders.
+  // Row Level Security limits this to the user's own links, and their own folders,
+  // and a locked folder's links (in or out) to a browser with the PIN entered.
   const { error, count } = await supabase
     .from("links")
     .update({ collection_id: folder?.id ?? null }, { count: "exact" })
     .in("id", ids);
+  if (error?.code === "42501") return { error: LOCKED_AGAIN };
   if (error) return { error: `Couldn't move ${ids.length === 1 ? "this link" : "these links"}: ${error.message}` };
+  if (count === 0) return { error: LOCKED_AGAIN };
 
   refresh();
   for (const id of ids) revalidatePath(`/links/${id}`);
@@ -495,7 +465,7 @@ export async function setCollectionPublic(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Deletes a collection. Its links are kept and become "Unsorted". */
+/** Deletes a collection. Its links are kept, in no folder. */
 export async function deleteCollection(formData: FormData): Promise<void> {
   const id = str(formData, "id");
   const { supabase } = await requireUser();

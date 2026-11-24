@@ -1,0 +1,16 @@
+{
+  "name": "extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JustLink browser extension for Chrome and Edge: save the page you're on in one click.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "icons": "node scripts/make-icons.mjs",
+    "preview": "node scripts/preview.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

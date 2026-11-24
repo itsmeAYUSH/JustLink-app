@@ -13,9 +13,11 @@ import {
   type RefObject,
 } from "react";
 import { createFolders, moveLinks, type CreateFoldersState } from "@/app/actions";
+import { lockNow } from "@/app/vault-actions";
 import { FOLDER_ICONS, FOLDER_PRESETS, folderKey, QUICK_START_FOLDERS, type Folder } from "@/lib/folders";
 import { CheckIcon, FolderMoveIcon, FolderPlusIcon, SpinnerIcon, XIcon } from "./icons";
 import { idsFormData, useToast } from "./toast";
+import { useVault } from "./vault";
 
 const FoldersContext = createContext<Folder[]>([]);
 
@@ -304,7 +306,7 @@ export function MoveToFolderButton({
   onMoved,
 }: {
   ids: string[];
-  /** The folder the link is in now (null: Unsorted), marked in the menu. Leave out for several links. */
+  /** The folder the link is in now (null: no folder), marked in the menu. Leave out for several links. */
   currentFolderId?: string | null;
   variant?: "icon" | "bar";
   className?: string;
@@ -312,6 +314,7 @@ export function MoveToFolderButton({
 }) {
   const folders = useFolders();
   const toast = useToast();
+  const vault = useVault();
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -339,11 +342,15 @@ export function MoveToFolderButton({
     return () => menu.removeEventListener("beforetoggle", place);
   }, []);
 
-  function move(target: { folder: string } | { newFolder: string }) {
+  async function move(target: { folder: string } | { newFolder: string }) {
     const formData = idsFormData(ids);
     if ("newFolder" in target) formData.append("new_folder", target.newFolder);
     else formData.append("folder", target.folder);
     menuRef.current?.hidePopover();
+    // Into a locked folder: its PIN first, and it locks again straight after.
+    const into = "folder" in target ? folders.find((folder) => folder.id === target.folder) : undefined;
+    const relock = into?.locked && !vault.isOpen(into.id) ? into.id : null;
+    if (into?.locked && !(await vault.ensureUnlocked(into.id))) return;
     startTransition(async () => {
       const result = await moveLinks(null, formData);
       if (result?.error) {
@@ -351,10 +358,19 @@ export function MoveToFolderButton({
         return;
       }
       setNewName("");
-      const where = result?.folder ? `${result.folder.icon} ${result.folder.name}` : "📥 Unsorted";
       const moved = result?.count ?? ids.length;
-      toast.show({ message: moved === 1 ? `Moved to ${where}` : `Moved ${moved} links to ${where}` });
+      const folder = result?.folder;
+      toast.show({
+        message: folder
+          ? moved === 1
+            ? `Moved to ${folder.icon} ${folder.name}`
+            : `Moved ${moved} links to ${folder.icon} ${folder.name}`
+          : moved === 1
+            ? "Taken out of its folder"
+            : `Took ${moved} links out of their folders`,
+      });
       onMoved?.();
+      if (relock) void lockNow(relock);
     });
   }
 
@@ -392,11 +408,11 @@ export function MoveToFolderButton({
         <p className="px-2.5 pt-1 pb-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
           {ids.length === 1 ? "Move to folder" : `Move ${ids.length} links to`}
         </p>
-        <button type="button" role="menuitem" onClick={() => move({ folder: "" })} className={item}>
+        <button type="button" role="menuitem" onClick={() => void move({ folder: "" })} className={item}>
           <span aria-hidden="true" className="w-5 text-center">
             📥
           </span>
-          <span className="min-w-0 flex-1 truncate">Unsorted</span>
+          <span className="min-w-0 flex-1 truncate">No folder</span>
           {currentFolderId === null && <CheckIcon className="size-4 text-indigo-600 dark:text-indigo-300" />}
         </button>
         {folders.map((folder) => (
@@ -404,13 +420,18 @@ export function MoveToFolderButton({
             key={folder.id}
             type="button"
             role="menuitem"
-            onClick={() => move({ folder: folder.id })}
+            onClick={() => void move({ folder: folder.id })}
             className={item}
           >
             <span aria-hidden="true" className="w-5 text-center">
               {folder.icon}
             </span>
             <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+            {folder.locked && (
+              <span aria-label="Locked" title="Locked" className="text-xs">
+                🔒
+              </span>
+            )}
             {currentFolderId === folder.id && <CheckIcon className="size-4 text-indigo-600 dark:text-indigo-300" />}
           </button>
         ))}
@@ -418,7 +439,7 @@ export function MoveToFolderButton({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (newName.trim()) move({ newFolder: newName.trim() });
+            if (newName.trim()) void move({ newFolder: newName.trim() });
           }}
           className="flex items-center gap-1.5 px-1.5"
         >

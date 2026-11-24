@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JustLink popup preview</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #e9e8f2;
+        font: 13px system-ui, sans-serif;
+        color: #333;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #05040f; color: #ccc; }
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: flex-start;
+      }
+      figure { margin: 0; }
+      figcaption { margin-bottom: 6px; font-weight: 600; }
+      iframe {
+        width: 360px;
+        height: 600px;
+        border: 0;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
+      }
+      .short { height: 300px; }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <figure><figcaption>New page</figcaption><iframe src="frame.html?state=new"></iframe></figure>
+      <figure><figcaption>Saved before</figcaption><iframe src="frame.html?state=existing"></iframe></figure>
+      <figure><figcaption>In the Trash</figcaption><iframe src="frame.html?state=trash"></iframe></figure>
+      <figure><figcaption>Loading</figcaption><iframe class="short" src="frame.html?state=loading"></iframe></figure>
+      <figure><figcaption>Signed out</figcaption><iframe class="short" src="frame.html?state=signed-out"></iframe></figure>
+      <figure><figcaption>Browser page</figcaption><iframe class="short" src="frame.html?state=unsupported"></iframe></figure>
+      <figure><figcaption>JustLink not running</figcaption><iframe class="short" src="frame.html?state=offline"></iframe></figure>
+    </div>
+  </body>
+</html>

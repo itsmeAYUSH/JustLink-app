@@ -15,7 +15,8 @@ function Item({
   active: boolean;
   icon: ReactNode;
   label: string;
-  count?: number;
+  /** A number, or 🔒 for a locked folder that isn't open. */
+  count?: number | "locked";
 }) {
   return (
     <Link
@@ -29,7 +30,13 @@ function Item({
     >
       <span className="w-5 text-center">{icon}</span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      {count !== undefined && <span className={`text-xs ${active ? "opacity-70" : "text-zinc-400"}`}>{count}</span>}
+      {count === "locked" ? (
+        <span className={`text-xs ${active ? "opacity-70" : "text-zinc-400"}`} title="Locked" aria-label="Locked">
+          🔒
+        </span>
+      ) : (
+        count !== undefined && <span className={`text-xs ${active ? "opacity-70" : "text-zinc-400"}`}>{count}</span>
+      )}
     </Link>
   );
 }
@@ -42,10 +49,13 @@ export function Sidebar({
   filters,
   stats,
   collections,
+  openFolders,
 }: {
   filters: Filters;
   stats: LibraryStats;
-  collections: Pick<Collection, "id" | "name" | "icon" | "is_public">[];
+  collections: Pick<Collection, "id" | "name" | "icon" | "is_public" | "is_locked">[];
+  /** Locked folders opened with the PIN for this visit. */
+  openFolders: string[];
 }) {
   const inSection = !filters.collection && !filters.tag;
 
@@ -53,7 +63,7 @@ export function Sidebar({
     <nav aria-label="Library" className="text-sm">
       <Item href={sectionHref(filters, {})} active={inSection && filters.scope === "all"} icon="🔗" label="All links" count={stats.total} />
       <Item href={sectionHref(filters, { scope: "favorites" })} active={inSection && filters.scope === "favorites"} icon="★" label="Favorites" count={stats.favorites} />
-      <Item href={sectionHref(filters, { scope: "unsorted" })} active={inSection && filters.scope === "unsorted"} icon="📥" label="Unsorted" count={stats.unsorted} />
+      <Item href={sectionHref(filters, { scope: "unsorted" })} active={inSection && filters.scope === "unsorted"} icon="📥" label="No folder" count={stats.unsorted} />
       <Item href={sectionHref(filters, { scope: "archived" })} active={inSection && filters.scope === "archived"} icon="🗄" label="Archive" count={stats.archived} />
       <Item href={sectionHref(filters, { scope: "trash" })} active={inSection && filters.scope === "trash"} icon="🗑" label="Trash" count={stats.trash} />
 
@@ -65,7 +75,7 @@ export function Sidebar({
           active={filters.collection === collection.id}
           icon={collection.icon}
           label={collection.is_public ? `${collection.name} · shared` : collection.name}
-          count={stats.collections[collection.id] ?? 0}
+          count={collection.is_locked && !openFolders.includes(collection.id) ? "locked" : (stats.collections[collection.id] ?? 0)}
         />
       ))}
       <NewFolderButton />

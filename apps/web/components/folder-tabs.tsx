@@ -15,7 +15,8 @@ function Tab({
   active: boolean;
   icon: string;
   label: string;
-  count: number;
+  /** A number, or 🔒 for a locked folder that isn't open. */
+  count: number | "locked";
 }) {
   return (
     <Link
@@ -29,23 +30,28 @@ function Tab({
     >
       <span aria-hidden="true">{icon}</span>
       {label}
-      <span className={`text-xs tabular-nums ${active ? "opacity-70" : "text-zinc-400"}`}>{count}</span>
+      <span className={`text-xs tabular-nums ${active ? "opacity-70" : "text-zinc-400"}`}>
+        {count === "locked" ? <span aria-label="Locked">🔒</span> : count}
+      </span>
     </Link>
   );
 }
 
 /**
- * Folders as tabs above the links: "All" (every link, in a folder or not), "Unsorted",
+ * Folders as tabs above the links: "All" (every link, in a folder or not), "No folder",
  * then each folder, and a New folder button. Without folders yet, it offers ready-made ones.
  */
 export function FolderTabs({
   filters,
   folders,
   stats,
+  openFolders,
 }: {
   filters: Filters;
   folders: Folder[];
   stats: LibraryStats;
+  /** Locked folders opened with the PIN for this visit. */
+  openFolders: string[];
 }) {
   const unsorted = !filters.collection && filters.scope === "unsorted";
   const all = !filters.collection && filters.scope === "all";
@@ -57,7 +63,7 @@ export function FolderTabs({
         href={sectionHref(filters, { scope: "unsorted" })}
         active={unsorted}
         icon="📥"
-        label="Unsorted"
+        label="No folder"
         count={stats.unsorted}
       />
       <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-zinc-200 dark:bg-zinc-800" />
@@ -68,7 +74,7 @@ export function FolderTabs({
           active={filters.collection === folder.id}
           icon={folder.icon}
           label={folder.name}
-          count={stats.collections[folder.id] ?? 0}
+          count={folder.locked && !openFolders.includes(folder.id) ? "locked" : (stats.collections[folder.id] ?? 0)}
         />
       ))}
       {folders.length === 0 && <QuickStartFolders />}

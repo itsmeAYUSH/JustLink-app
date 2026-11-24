@@ -87,7 +87,7 @@ export function AddLinkForm({
           aria-label="Folder"
           className="rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 sm:max-w-44"
         >
-          <option value="">📥 Unsorted</option>
+          <option value="">📥 No folder</option>
           {collections.map((collection) => (
             <option key={collection.id} value={collection.id}>
               {collection.icon} {collection.name}

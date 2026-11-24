@@ -56,6 +56,8 @@ type CollectionRow = {
   name: string;
   icon: string;
   is_public: boolean;
+  /** Locked with the account's PIN: its links are hidden until the PIN is entered. */
+  is_locked: boolean;
   share_id: string;
   created_at: string;
   updated_at: string;
@@ -98,6 +100,14 @@ export type Database = {
       get_library_stats: { Args: Record<PropertyKey, never>; Returns: Json };
       get_shared_collection: { Args: { p_share_id: string }; Returns: Json };
       purge_expired_trash: { Args: Record<PropertyKey, never>; Returns: number };
+      vault_status: { Args: Record<PropertyKey, never>; Returns: Json };
+      set_vault_pin: { Args: { new_pin: string }; Returns: Json };
+      unlock_vault: { Args: { pin: string; folder?: string | null }; Returns: Json };
+      lock_vault: { Args: { folder?: string | null }; Returns: undefined };
+      keep_folder_open: { Args: { folder: string }; Returns: boolean };
+      set_folder_locked: { Args: { folder: string; locked: boolean }; Returns: undefined };
+      reset_vault: { Args: Record<PropertyKey, never>; Returns: Json };
+      remove_vault_pin: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

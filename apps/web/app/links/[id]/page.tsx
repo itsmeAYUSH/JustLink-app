@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -10,6 +11,8 @@ import { LinkActions } from "@/components/link-actions";
 import { Favicon, ImagePlaceholder } from "@/components/link-card";
 import { LinkEditor } from "@/components/link-editor";
 import { SiteHeader } from "@/components/site-header";
+import { FolderSession } from "@/components/vault";
+import { profileFromUser } from "@/lib/profile";
 import { SubmitButton } from "@/components/submit-button";
 import { TagList } from "@/components/tag-list";
 import {
@@ -22,6 +25,7 @@ import {
   trashCountdown,
   trashExpiry,
 } from "@/lib/links";
+import { HIDE_IMAGES_COOKIE } from "@/lib/preferences";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
@@ -67,10 +71,11 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
   const { id } = await params;
   const supabase = await createClient();
+  const hideImages = (await cookies()).get(HIDE_IMAGES_COOKIE)?.value === "1";
   const [link, { data: userData }, { data: collections }] = await Promise.all([
     getLink(id),
     supabase.auth.getUser(),
-    supabase.from("collections").select("id, name, icon").order("name"),
+    supabase.from("collections").select("id, name, icon, is_locked").order("name"),
   ]);
   if (!link) notFound();
 
@@ -83,8 +88,10 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
 
   return (
     <>
-      <SiteHeader email={userData.user?.email} />
+      <SiteHeader user={profileFromUser(userData.user)} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+        {/* A link in a locked folder: this page counts as inside the folder, so it stays open here. */}
+        {collection?.is_locked && <FolderSession key={collection.id} folderId={collection.id} />}
         <Link
           href={
             link.deleted_at
@@ -125,12 +132,16 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
 
         <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="aspect-[1.91/1] max-h-[420px] w-full overflow-hidden border-b border-zinc-100 dark:border-zinc-800">
-            <FallbackImage
-              src={link.image}
-              alt={link.image_alt ?? ""}
-              className="size-full object-cover"
-              fallback={<ImagePlaceholder link={link} />}
-            />
+            {hideImages ? (
+              <ImagePlaceholder link={link} />
+            ) : (
+              <FallbackImage
+                src={link.image}
+                alt={link.image_alt ?? ""}
+                className="size-full object-cover"
+                fallback={<ImagePlaceholder link={link} />}
+              />
+            )}
           </div>
 
           <div className="space-y-4 p-6">

@@ -91,9 +91,11 @@ export function ImagePlaceholder({
 type CardProps = {
   link: LinkListItem;
   collection?: Pick<Collection, "id" | "name" | "icon"> | null;
+  /** Show the placeholder (site icon and name) instead of the page's preview image. */
+  hideImages?: boolean;
 };
 
-export function LinkCard({ link, collection }: CardProps) {
+export function LinkCard({ link, collection, hideImages = false }: CardProps) {
   const description = displayDescription(link);
 
   return (
@@ -101,12 +103,16 @@ export function LinkCard({ link, collection }: CardProps) {
       <div
         className={`relative aspect-[1.91/1] overflow-hidden border-b border-zinc-100 dark:border-zinc-800 ${link.deleted_at ? "opacity-70 grayscale" : ""}`}
       >
-        <FallbackImage
-          src={link.image}
-          alt={link.image_alt ?? ""}
-          className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
-          fallback={<ImagePlaceholder link={link} />}
-        />
+        {hideImages ? (
+          <ImagePlaceholder link={link} />
+        ) : (
+          <FallbackImage
+            src={link.image}
+            alt={link.image_alt ?? ""}
+            className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            fallback={<ImagePlaceholder link={link} />}
+          />
+        )}
         <div className={`absolute top-1 left-1 z-30 ${checkboxReveal}`}>
           <SelectCheckbox id={link.id} title={displayTitle(link)} />
         </div>
@@ -186,24 +192,24 @@ export function LinkCard({ link, collection }: CardProps) {
 }
 
 /** Compact one-line row for the list view. */
-export function LinkRow({ link, collection }: CardProps) {
+export function LinkRow({ link, collection, hideImages = false }: CardProps) {
   const description = displayDescription(link);
+  const iconBox = (
+    <div className="flex size-full items-center justify-center bg-zinc-100 dark:bg-zinc-800">
+      <Favicon src={link.favicon} className="size-5" />
+    </div>
+  );
   return (
     <li className="group relative flex items-center gap-3 py-3 pr-4 pl-2 hover:bg-zinc-50 has-checked:bg-indigo-50/80 dark:hover:bg-zinc-800/50 dark:has-checked:bg-indigo-500/10">
       <div className={`-mr-1 shrink-0 ${checkboxReveal}`}>
         <SelectCheckbox id={link.id} title={displayTitle(link)} />
       </div>
       <div className="hidden h-12 w-20 shrink-0 overflow-hidden rounded-md border border-zinc-100 sm:block dark:border-zinc-800">
-        <FallbackImage
-          src={link.image}
-          alt=""
-          className="size-full object-cover"
-          fallback={
-            <div className="flex size-full items-center justify-center bg-zinc-100 dark:bg-zinc-800">
-              <Favicon src={link.favicon} className="size-5" />
-            </div>
-          }
-        />
+        {hideImages ? (
+          iconBox
+        ) : (
+          <FallbackImage src={link.image} alt="" className="size-full object-cover" fallback={iconBox} />
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
