@@ -49,15 +49,15 @@ export default async function SharedCollectionPage({ params }: PageProps<"/s/[sh
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
       <header className="mb-8">
-        <p className="text-sm text-zinc-500">Shared folder</p>
+        <p className="text-sm text-muted">Shared folder</p>
         <h1 className="text-3xl font-semibold tracking-tight">
           {shared.icon} {shared.name}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">{shared.links.length} links</p>
+        <p className="mt-1 text-sm text-muted">{shared.links.length} links</p>
       </header>
 
       {shared.links.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-sm text-zinc-500 dark:border-zinc-700">
+        <p className="rounded-xl border border-dashed border-line p-12 text-center text-sm text-muted">
           This collection is empty.
         </p>
       ) : (
@@ -68,9 +68,9 @@ export default async function SharedCollectionPage({ params }: PageProps<"/s/[sh
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+              className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="aspect-[1.91/1] overflow-hidden border-b border-zinc-100 dark:border-zinc-800">
+              <div className="aspect-[1.91/1] overflow-hidden border-b border-line">
                 <FallbackImage
                   src={link.image}
                   alt={link.image_alt ?? ""}
@@ -79,7 +79,7 @@ export default async function SharedCollectionPage({ params }: PageProps<"/s/[sh
                 />
               </div>
               <div className="flex flex-1 flex-col gap-2 p-4">
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <div className="flex items-center gap-2 text-xs text-muted">
                   <Favicon src={link.favicon} />
                   <span className="truncate">{link.site_name ?? hostname(link.url)}</span>
                 </div>
@@ -87,12 +87,12 @@ export default async function SharedCollectionPage({ params }: PageProps<"/s/[sh
                   {link.title ?? hostname(link.url)}
                 </h2>
                 {link.description && (
-                  <p className="line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">{link.description}</p>
+                  <p className="line-clamp-3 text-sm text-muted">{link.description}</p>
                 )}
                 {link.tags.length > 0 && (
                   <p className="mt-auto flex flex-wrap gap-1 pt-1">
                     {link.tags.slice(0, 5).map((tag) => (
-                      <span key={tag} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                      <span key={tag} className="rounded-full bg-subtle px-2 py-0.5 text-xs text-muted">
                         #{tag}
                       </span>
                     ))}
@@ -104,7 +104,7 @@ export default async function SharedCollectionPage({ params }: PageProps<"/s/[sh
         </div>
       )}
 
-      <footer className="mt-12 text-center text-sm text-zinc-500">
+      <footer className="mt-12 text-center text-sm text-muted">
         Saved with{" "}
         <Link href="/login" className="font-medium underline">
           {APP_NAME}

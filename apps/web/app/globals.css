@@ -3,30 +3,75 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /*
+   * The app's whole palette: calm neutrals, one primary (a muted sage-teal) and one
+   * accent (a quiet amber, for favourites and things that need a glance). Red is kept
+   * for destructive buttons only. Every value switches for dark mode below, so
+   * components use these names and never need dark: variants for colour.
+   */
+  --color-canvas: var(--canvas); /* page background */
+  --color-surface: var(--surface); /* cards, menus, dialogs */
+  --color-subtle: var(--subtle); /* hover fills, quiet chips, placeholders */
+  --color-line: var(--line); /* borders and dividers */
+  --color-ink: var(--ink); /* main text */
+  --color-muted: var(--muted); /* secondary text and icons */
+  --color-brand: var(--brand); /* primary: main buttons, active states, focus */
+  --color-brand-soft: var(--brand-soft); /* primary tint behind active items */
+  --color-brand-ink: var(--brand-ink); /* text on brand-soft */
+  --color-on-brand: var(--on-brand); /* text on any strong fill (brand, ink, danger) */
+  --color-accent: var(--accent); /* favourites, notices */
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger); /* destructive actions only */
+  --color-danger-soft: var(--danger-soft);
+}
+
+:root {
+  --canvas: #f6f6f3;
+  --surface: #ffffff;
+  --subtle: #efeeea;
+  --line: #e4e2dc;
+  --ink: #1f2124;
+  --muted: #6b6e75;
+  --brand: #3d7266;
+  --brand-soft: #e5efeb;
+  --brand-ink: #2c574d;
+  --on-brand: #ffffff;
+  --accent: #a8741f;
+  --accent-soft: #f6eedf;
+  --accent-ink: #74511a;
+  --danger: #b0463d;
+  --danger-soft: #f7e8e6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #151618;
+    --surface: #1c1d20;
+    --subtle: #25272b;
+    --line: #2f3136;
+    --ink: #e6e6e3;
+    --muted: #9b9da3;
+    --brand: #7fb3a6;
+    --brand-soft: #1f2d2a;
+    --brand-ink: #a9d3c8;
+    --on-brand: #10201c;
+    --accent: #d3a659;
+    --accent-soft: #2c2519;
+    --accent-ink: #e4c48e;
+    --danger: #df7d73;
+    --danger-soft: #2f1d1b;
+  }
 }
 
 @theme {
-  --animate-aurora-1: aurora-1 24s ease-in-out infinite alternate;
-  --animate-aurora-2: aurora-2 28s ease-in-out infinite alternate;
-  --animate-aurora-3: aurora-3 32s ease-in-out infinite alternate;
   --animate-float: float 7s ease-in-out infinite;
   --animate-float-slow: float 9s ease-in-out infinite;
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in: fade-in 0.4s ease-out both;
   --animate-fade-down: fade-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 
-  @keyframes aurora-1 {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(12%, 8%, 0) scale(1.15); }
-  }
-  @keyframes aurora-2 {
-    from { transform: translate3d(0, 0, 0) scale(1.1); }
-    to { transform: translate3d(-14%, 10%, 0) scale(0.95); }
-  }
-  @keyframes aurora-3 {
-    from { transform: translate3d(0, 0, 0) scale(0.95); }
-    to { transform: translate3d(8%, -12%, 0) scale(1.15); }
-  }
   @keyframes float {
     0%, 100% { translate: 0 0; }
     50% { translate: 0 -10px; }
@@ -49,29 +94,31 @@
   color-scheme: light dark;
 }
 
+/*
+ * Breakpoints by window height, for screens that fit in one view without scrolling
+ * (the sign-in page): "short" is a typical laptop window, "shorter" a small one, "shortest"
+ * one where little more than the form fits.
+ */
+@custom-variant short (@media (max-height: 860px));
+@custom-variant shorter (@media (max-height: 720px));
+@custom-variant shortest (@media (max-height: 600px));
+
 body {
-  @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+  @apply bg-canvas text-ink;
 }
 
-/* Sign-in page backdrop: a faint grid that fades out toward the edges, plus film grain. */
+/* Focus rings and text selection in the primary colour, everywhere. */
+::selection {
+  background: color-mix(in oklab, var(--brand) 25%, transparent);
+}
+
+/* Sign-in page backdrop: a faint grid that fades out toward the edges. */
 .auth-grid {
   background-image:
-    linear-gradient(to right, rgb(79 70 229 / 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(79 70 229 / 0.07) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in oklab, var(--line) 75%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--line) 75%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, black 25%, transparent 100%);
-}
-
-@media (prefers-color-scheme: dark) {
-  .auth-grid {
-    background-image:
-      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
-  }
-}
-
-.auth-noise {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, black 20%, transparent 100%);
 }
 
 /* Keep browser autofill from painting the inputs yellow or light blue. */

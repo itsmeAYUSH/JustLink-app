@@ -11,12 +11,15 @@ type Props = {
   /** What is about to be deleted, shown in a gray box. */
   subject: ReactNode;
   description: string;
+  /** Choices shown under the description, such as what happens to a folder's links. */
+  options?: ReactNode;
   confirmLabel: string;
   action: (formData: FormData) => void;
   pending: boolean;
   error?: string;
   /** Hidden inputs that say what to delete. */
   children: ReactNode;
+  onClose?: () => void;
 };
 
 /** A modal "are you sure?" for deleting. Open it with `ref.current.showModal()`. */
@@ -27,11 +30,13 @@ export function DeleteDialog({
   heading,
   subject,
   description,
+  options,
   confirmLabel,
   action,
   pending,
   error,
   children,
+  onClose,
 }: Props) {
   const titleId = `${id}-title`;
   const descriptionId = `${id}-description`;
@@ -45,6 +50,7 @@ export function DeleteDialog({
       ref={ref}
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
+      onClose={onClose}
       // Escape closes the dialog, except while the delete is running.
       onCancel={(event) => {
         if (pending) event.preventDefault();
@@ -53,30 +59,31 @@ export function DeleteDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) close();
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-zinc-200 bg-white p-0 text-left text-base font-normal text-zinc-900 shadow-2xl backdrop:bg-zinc-950/50 backdrop:backdrop-blur-sm open:motion-safe:animate-fade-up dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-line bg-surface p-0 text-left text-base font-normal text-ink shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm open:motion-safe:animate-fade-up"
     >
       <form action={action} className="p-6">
         {children}
 
         <div className="flex gap-4">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-danger-soft text-danger">
             <TrashIcon className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="text-lg font-semibold">
               {heading}
             </h2>
-            <div className="mt-2 rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium break-words text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
+            <div className="mt-2 rounded-lg bg-subtle px-3 py-2 text-sm font-medium break-words text-ink">
               {subject}
             </div>
-            <p id={descriptionId} className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <p id={descriptionId} className="mt-3 text-sm text-muted">
               {description}
             </p>
+            {options}
           </div>
         </div>
 
         {error && (
-          <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+          <p role="alert" className="mt-4 rounded-lg bg-danger-soft p-3 text-sm text-danger">
             {error}
           </p>
         )}
@@ -87,14 +94,14 @@ export function DeleteDialog({
             type="button"
             onClick={close}
             disabled={pending}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:outline-none disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-subtle focus-visible:ring-2 focus-visible:ring-line/50 focus-visible:outline-none disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500/50 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-80 dark:focus-visible:ring-offset-zinc-900"
+            className="inline-flex min-w-28 items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors hover:bg-danger/90 focus-visible:ring-2 focus-visible:ring-danger/50 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-80"
           >
             {pending ? (
               <>

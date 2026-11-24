@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AuroraBackground, AuthShowcase, BrandMark } from "./auth-showcase";
+import { AuthBackground, AuthShowcase, BrandMark } from "./auth-showcase";
 import { ShieldIcon } from "@/components/icons";
 import { LoginForm } from "./login-form";
 
@@ -8,35 +8,36 @@ export const metadata: Metadata = { title: "Sign in" };
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
   const next = typeof params.next === "string" ? params.next : "/";
-  const error = typeof params.error === "string" ? params.error : undefined;
+  const error =
+    params.account === "deleted"
+      ? {
+          title: "Your account was deleted",
+          message: "You've been signed out everywhere, and this account can't be signed in to any more.",
+        }
+      : typeof params.error === "string"
+        ? { title: "We couldn't confirm your email", message: params.error }
+        : undefined;
   const mode = params.mode === "signup" ? "signup" : "signin";
 
   return (
-    <main className="relative isolate flex min-h-dvh flex-1 overflow-hidden">
-      <AuroraBackground />
+    // Exactly one screen tall: the content shrinks to fit shorter windows instead of scrolling.
+    // Only a very short window (a phone on its side) can scroll, so the form is never cut off.
+    <main className="relative isolate flex h-dvh overflow-hidden shortest:overflow-y-auto">
+      <AuthBackground />
 
-      <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-16 px-5 py-10 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:px-8">
+      <div className="mx-auto grid w-full max-w-7xl flex-1 items-center gap-12 px-5 py-8 short:py-6 shorter:py-5 lg:grid-cols-[1.1fr_1fr] lg:px-10 xl:gap-20">
         <AuthShowcase />
 
         <div className="mx-auto w-full max-w-[440px] motion-safe:animate-fade-up motion-safe:[animation-delay:120ms]">
-          <BrandMark className="mb-8 justify-center lg:hidden" />
+          <BrandMark className="mb-8 justify-center shorter:mb-5 lg:hidden" />
 
-          <div className="relative">
-            {/* Soft glow behind the card. */}
-            <div
-              aria-hidden="true"
-              className="absolute -inset-px rounded-[28px] bg-linear-to-br from-indigo-500/40 via-violet-500/20 to-fuchsia-500/40 opacity-60 blur-2xl dark:opacity-50"
-            />
-            <div className="relative rounded-[28px] bg-linear-to-b from-white to-white/40 p-px shadow-2xl shadow-indigo-950/10 dark:from-white/20 dark:to-white/5 dark:shadow-black/50">
-              <div className="rounded-[27px] bg-white/80 p-6 backdrop-blur-2xl sm:p-9 dark:bg-[#0f0e26]/80">
-                <LoginForm next={next} initialError={error} initialMode={mode} />
-              </div>
-            </div>
+          <div className="rounded-2xl border border-line bg-surface p-6 shadow-[0_24px_60px_-32px_rgb(0_0_0/0.3)] sm:p-9 sm:short:p-8 sm:shorter:p-7">
+            <LoginForm next={next} initialError={error} initialMode={mode} />
           </div>
 
-          <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted shorter:mt-4">
             <ShieldIcon className="size-3.5" />
-            Your links are private unless you share a collection.
+            Your links are private unless you share a folder.
           </p>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AppFrame } from "@/components/app-frame";
 import { Avatar } from "@/components/avatar";
 import {
   AccountSection,
+  DeleteAccountSection,
   EmailSection,
   LockedFoldersSection,
   NameSection,
@@ -11,9 +13,7 @@ import {
   PhotoSection,
   PinSection,
 } from "@/components/profile-forms";
-import { SiteHeader } from "@/components/site-header";
-import { ToastProvider } from "@/components/toast";
-import { RemovePinPrompt, VaultProvider } from "@/components/vault";
+import { RemovePinPrompt } from "@/components/vault";
 import { displayName, profileFromUser } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { readVaultStatus } from "@/lib/vault";
@@ -47,34 +47,34 @@ export default async function ProfilePage({
   const vault = readVaultStatus(vaultJson);
 
   return (
-    <ToastProvider>
-      <VaultProvider status={vault}>
-        <SiteHeader user={profile} />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
-          <Link href="/" className="mb-6 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
-            ← Back to your library
-          </Link>
+    <AppFrame
+      header={<span className="truncate text-base font-semibold tracking-tight sm:text-lg">Profile</span>}
+    >
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-4 pb-8 sm:pt-5">
+        <Link href="/" className="mb-4 inline-block text-sm text-muted hover:text-ink">
+          ← Back to your library
+        </Link>
 
-          <div className="mb-8 flex items-center gap-4">
-            <Avatar profile={profile} size={64} />
-            <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold tracking-tight">{displayName(profile)}</h1>
-              {profile.name && <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">{profile.email}</p>}
-            </div>
+        <div className="mb-8 flex items-center gap-4">
+          <Avatar profile={profile} size={64} />
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight">{displayName(profile)}</h1>
+            {profile.name && <p className="truncate text-sm text-muted">{profile.email}</p>}
           </div>
+        </div>
 
-          <div className="space-y-6">
-            <PhotoSection profile={profile} />
-            <NameSection name={profile.name} />
-            <EmailSection email={profile.email} pendingEmail={profile.pendingEmail} />
-            <PasswordSection />
-            <PinSection status={vault} lockedCount={lockedCount} />
-            <LockedFoldersSection folders={folders} hasPin={vault.hasPin} />
-            <AccountSection />
-          </div>
-        </main>
-        {params["reset-pin"] === "1" && <RemovePinPrompt returnTo="/profile" />}
-      </VaultProvider>
-    </ToastProvider>
+        <div className="space-y-6">
+          <PhotoSection profile={profile} />
+          <NameSection name={profile.name} />
+          <EmailSection email={profile.email} />
+          <PasswordSection />
+          <PinSection status={vault} lockedCount={lockedCount} />
+          <LockedFoldersSection folders={folders} hasPin={vault.hasPin} />
+          <AccountSection />
+          <DeleteAccountSection email={profile.email} />
+        </div>
+      </main>
+      {params["reset-pin"] === "1" && <RemovePinPrompt returnTo="/profile" />}
+    </AppFrame>
   );
 }

@@ -44,7 +44,7 @@ export function DeleteLinkButton({ id, title, variant = "icon", redirectToTrash 
           title="Delete forever"
           aria-label={`Delete “${title}” forever`}
           aria-haspopup="dialog"
-          className="relative z-10 inline-flex size-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500/40 focus-visible:outline-none dark:hover:bg-rose-950/60 dark:hover:text-rose-400"
+          className="relative z-10 inline-flex size-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-danger-soft hover:text-danger focus-visible:ring-2 focus-visible:ring-danger/40 focus-visible:outline-none"
         >
           <TrashIcon className="size-4" />
         </button>
@@ -53,7 +53,7 @@ export function DeleteLinkButton({ id, title, variant = "icon", redirectToTrash 
           type="button"
           onClick={open}
           aria-haspopup="dialog"
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-rose-500/40 focus-visible:outline-none dark:border-red-900 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-950"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-danger/30 bg-surface px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft focus-visible:ring-2 focus-visible:ring-danger/40 focus-visible:outline-none"
         >
           <TrashIcon className="size-4" />
           Delete forever

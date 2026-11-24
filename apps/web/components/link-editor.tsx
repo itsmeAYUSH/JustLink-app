@@ -7,7 +7,7 @@ import { SubmitButton } from "./submit-button";
 
 const idle: UpdateLinkState = { status: "idle" };
 const field =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-zinc-800";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-muted/50 focus:ring-2 focus:ring-line";
 
 type Props = {
   link: {
@@ -83,13 +83,13 @@ export function LinkEditor({ link, collections }: Props) {
         </label>
         {suggestions.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 sm:col-span-2">
-            <span className="mr-1 text-xs text-zinc-500">Suggested from the page:</span>
+            <span className="mr-1 text-xs text-muted">Suggested from the page:</span>
             {suggestions.slice(0, 12).map((keyword) => (
               <button
                 key={keyword}
                 type="button"
                 onClick={() => addTag(keyword)}
-                className="rounded-full border border-dashed border-zinc-300 px-2 py-0.5 text-xs text-zinc-600 hover:border-zinc-500 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-white"
+                className="rounded-full border border-dashed border-line px-2 py-0.5 text-xs text-muted hover:border-muted/50 hover:text-ink"
               >
                 + {keyword}
               </button>
@@ -113,7 +113,7 @@ export function LinkEditor({ link, collections }: Props) {
         {state.message && (
           <span
             aria-live="polite"
-            className={`text-sm ${state.status === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}
+            className={`text-sm ${state.status === "error" ? "text-danger" : "text-brand-ink"}`}
           >
             {state.message}
           </span>

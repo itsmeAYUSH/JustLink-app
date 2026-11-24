@@ -465,13 +465,46 @@ export async function setCollectionPublic(formData: FormData): Promise<void> {
   revalidatePath("/");
 }
 
-/** Deletes a collection. Its links are kept, in no folder. */
-export async function deleteCollection(formData: FormData): Promise<void> {
+/**
+ * Deletes a folder. "links" says what happens to the links in it: "keep" moves them to
+ * No folder (the database does that as the folder goes), "trash" moves them to the Trash
+ * first, where they can still be restored for 7 days.
+ */
+export async function deleteFolder(_prev: CollectionState, formData: FormData): Promise<CollectionState> {
   const id = str(formData, "id");
+  if (!UUID.test(id)) return { status: "error", message: "That folder doesn't exist." };
+  const withLinks = str(formData, "links") === "trash";
   const { supabase } = await requireUser();
-  await supabase.from("collections").delete().eq("id", id);
+
+  let trashed = 0;
+  if (withLinks) {
+    // Archived links in the folder go too: the whole folder is being deleted.
+    const { error, count } = await supabase
+      .from("links")
+      .update({ deleted_at: new Date().toISOString() }, { count: "exact" })
+      .eq("collection_id", id)
+      .is("deleted_at", null);
+    if (error) return { status: "error", message: `Couldn't move its links to the Trash: ${error.message}` };
+    trashed = count ?? 0;
+  }
+
+  // A locked folder is only deleted while it's open (Row Level Security).
+  const { error, count } = await supabase.from("collections").delete({ count: "exact" }).eq("id", id);
+  if (error) return { status: "error", message: `Couldn't delete this folder: ${error.message}` };
+  if (count === 0) {
+    return {
+      status: "error",
+      message: "Couldn't delete this folder. If it's locked, it may have locked again: enter your PIN and try once more.",
+    };
+  }
+
   revalidatePath("/");
-  redirect("/");
+  return {
+    status: "success",
+    message: withLinks
+      ? `Folder deleted. ${trashed === 1 ? "Its link is" : `${trashed} links are`} in the Trash.`
+      : "Folder deleted. Its links are in No folder.",
+  };
 }
 
 // ─── Import ─────────────────────────────────────────────────────────────────

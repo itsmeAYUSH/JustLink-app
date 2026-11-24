@@ -29,7 +29,7 @@ export function EmptyTrashButton({ count }: { count: number }) {
           cancelRef.current?.focus();
         }}
         aria-haspopup="dialog"
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-rose-500/40 focus-visible:outline-none dark:border-red-900 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-950"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-danger/30 bg-surface px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger-soft focus-visible:ring-2 focus-visible:ring-danger/40 focus-visible:outline-none"
       >
         <TrashIcon className="size-4" />
         Empty Trash

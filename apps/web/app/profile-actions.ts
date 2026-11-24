@@ -4,7 +4,6 @@ import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { AVATAR_MAX_BYTES } from "@/lib/profile";
-import { siteUrl } from "@/lib/site-url";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,7 +11,6 @@ import { createClient } from "@/lib/supabase/server";
 export type ProfileState = { status: "idle" | "success" | "error"; message?: string };
 
 const AVATARS = "avatars";
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 async function signedIn() {
   const supabase = await createClient();
@@ -21,6 +19,19 @@ async function signedIn() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   return { supabase, user };
+}
+
+/**
+ * Checks a password with a throwaway client, so this browser's session (and anything
+ * unlocked in it) is left alone; then ends that check's session.
+ */
+async function passwordIsRight(email: string, password: string): Promise<boolean> {
+  const { url, key } = getSupabaseEnv();
+  const check = createPlainClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await check.auth.signInWithPassword({ email, password });
+  if (error) return false;
+  await check.auth.signOut({ scope: "local" });
+  return true;
 }
 
 function saved(message: string): ProfileState {
@@ -86,28 +97,6 @@ export async function removeAvatar(): Promise<ProfileState> {
   return saved("Photo removed.");
 }
 
-// ─── Email ──────────────────────────────────────────────────────────────────
-
-export async function changeEmail(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!EMAIL.test(email)) return { status: "error", message: "Enter a valid email address, like name@example.com." };
-
-  const { supabase, user } = await signedIn();
-  if (email === user.email?.toLowerCase()) return { status: "error", message: "That's already your email." };
-
-  const { error } = await supabase.auth.updateUser(
-    { email },
-    { emailRedirectTo: `${await siteUrl()}/auth/confirm?next=${encodeURIComponent("/profile")}` },
-  );
-  if (error) {
-    const taken = error.code === "email_exists" || /already/i.test(error.message);
-    return { status: "error", message: taken ? "Another account already uses that email." : error.message };
-  }
-  return saved(
-    `Almost done: open the confirmation link we sent to ${email}. If your project asks for it, confirm from your current address too. Your email changes once that's done.`,
-  );
-}
-
 // ─── Password ───────────────────────────────────────────────────────────────
 
 export async function changePassword(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
@@ -120,14 +109,9 @@ export async function changePassword(_prev: ProfileState, formData: FormData): P
 
   const { supabase, user } = await signedIn();
   if (!user.email) return { status: "error", message: "This account has no email to check the password against." };
-
-  // Check the current password with a throwaway client, so this browser's session
-  // (and anything unlocked in it) is left alone; then end that check's session.
-  const { url, key } = getSupabaseEnv();
-  const check = createPlainClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { error: wrong } = await check.auth.signInWithPassword({ email: user.email, password: current });
-  if (wrong) return { status: "error", message: "Your current password isn't right." };
-  await check.auth.signOut({ scope: "local" });
+  if (!(await passwordIsRight(user.email, current))) {
+    return { status: "error", message: "Your current password isn't right." };
+  }
 
   const { error } = await supabase.auth.updateUser({ password: next });
   if (error) {
@@ -138,4 +122,34 @@ export async function changePassword(_prev: ProfileState, formData: FormData): P
     return { status: "error", message: error.message };
   }
   return saved("Password changed.");
+}
+
+// ─── Delete account ─────────────────────────────────────────────────────────
+
+/**
+ * Deletes the account the way this app does it: switched off, never erased (see
+ * supabase/migrations/*_account_deactivation.sql). It can't sign in or reach its links
+ * any more, and its shared folders stop being shared. Needs the password; afterwards
+ * every browser is signed out.
+ */
+export async function deleteAccount(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
+  const password = String(formData.get("password") ?? "");
+  if (!password) return { status: "error", message: "Enter your password to confirm." };
+
+  const { supabase, user } = await signedIn();
+  if (!user.email) return { status: "error", message: "This account has no email to check the password against." };
+  if (!(await passwordIsRight(user.email, password))) return { status: "error", message: "That password isn't right." };
+
+  const { error } = await supabase.rpc("deactivate_account");
+  if (error) {
+    return {
+      status: "error",
+      message: /deactivate_account/.test(error.message)
+        ? "Deleting accounts isn't set up yet: run supabase/migrations/*_account_deactivation.sql."
+        : error.message,
+    };
+  }
+
+  await supabase.auth.signOut({ scope: "global" });
+  redirect("/login?account=deleted");
 }

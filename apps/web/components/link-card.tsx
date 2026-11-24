@@ -4,7 +4,6 @@ import {
   displayTitle,
   formatDate,
   hostname,
-  safeColor,
   trashCountdown,
   trashExpiry,
   type Collection,
@@ -13,6 +12,7 @@ import {
 import { DeleteLinkButton } from "./delete-link-button";
 import { FallbackImage } from "./fallback-image";
 import { MoveToFolderButton } from "./folders";
+import { ExternalLinkIcon, StarIcon } from "./icons";
 import { LinkActions } from "./link-actions";
 import { RestoreLinkButton, TrashLinkButton } from "./link-trash-buttons";
 import { SelectCheckbox, SelectOverlay } from "./selection";
@@ -21,6 +21,10 @@ import { TagList } from "./tag-list";
 /** Checkboxes stay out of the way until hovered, focused, checked, or the list is in selection mode. */
 const checkboxReveal =
   "opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 has-checked:opacity-100 group-data-[selecting]/list:opacity-100";
+
+/** With a mouse, a link's buttons show on hover or focus so the list stays calm; touch screens always show them. */
+const quietActions =
+  "transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100";
 
 /** Star, archive, Move to folder and Move to Trash; or, for a link in the Trash, Restore and Delete forever. */
 function CardActions({ link }: { link: LinkListItem }) {
@@ -49,7 +53,7 @@ function TrashCountdown({ deletedAt, className = "" }: { deletedAt: string; clas
     <time
       dateTime={expiry.toISOString()}
       title={`Deleted for good on ${formatDate(expiry.toISOString(), true)}`}
-      className={`font-medium text-amber-600 dark:text-amber-400 ${className}`}
+      className={`font-medium text-accent ${className}`}
     >
       {trashCountdown(deletedAt)}
     </time>
@@ -62,26 +66,24 @@ export function Favicon({ src, className = "size-4" }: { src: string | null; cla
       src={src}
       alt=""
       className={`${className} shrink-0 rounded-sm object-contain`}
-      fallback={<span className={`${className} shrink-0 rounded-sm bg-zinc-200 dark:bg-zinc-700`} />}
+      fallback={<span className={`${className} shrink-0 rounded-sm bg-line`} />}
     />
   );
 }
 
-/** Shown when a page has no OG image (or it fails to load): the favicon on the site's theme color. */
+/** Shown when a page has no OG image (or it fails to load), or images are off: the favicon and site name. */
 export function ImagePlaceholder({
   link,
 }: {
   link: Pick<LinkListItem, "favicon" | "theme_color" | "url"> & { fetch_status?: LinkListItem["fetch_status"] };
 }) {
-  const color = safeColor(link.theme_color);
   const pending = link.fetch_status === "pending";
   return (
-    <div
-      className={`flex size-full items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 ${pending ? "animate-pulse" : ""}`}
-      style={color ? { backgroundImage: `linear-gradient(135deg, ${color}33, ${color}66)` } : undefined}
-    >
-      <div className="flex flex-col items-center gap-2 text-zinc-500 dark:text-zinc-400">
-        <Favicon src={link.favicon} className="size-10" />
+    <div className={`flex size-full items-center justify-center bg-subtle ${pending ? "animate-pulse" : ""}`}>
+      <div className="flex flex-col items-center gap-2.5 text-muted">
+        <span className="grid size-12 place-items-center rounded-xl bg-surface ring-1 ring-line">
+          <Favicon src={link.favicon} className="size-6" />
+        </span>
         <span className="text-xs font-medium">{pending ? "Fetching preview…" : hostname(link.url)}</span>
       </div>
     </div>
@@ -99,9 +101,9 @@ export function LinkCard({ link, collection, hideImages = false }: CardProps) {
   const description = displayDescription(link);
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md has-checked:border-indigo-500 has-checked:ring-2 has-checked:ring-indigo-500/30 dark:border-zinc-800 dark:bg-zinc-900 dark:has-checked:border-indigo-400 dark:has-checked:ring-indigo-400/30">
+    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-[border-color,box-shadow] hover:border-muted/35 hover:shadow-[0_6px_24px_-12px_rgb(0_0_0/0.18)] has-checked:border-brand has-checked:ring-2 has-checked:ring-brand/20">
       <div
-        className={`relative aspect-[1.91/1] overflow-hidden border-b border-zinc-100 dark:border-zinc-800 ${link.deleted_at ? "opacity-70 grayscale" : ""}`}
+        className={`relative aspect-[1.91/1] overflow-hidden border-b border-line ${link.deleted_at ? "opacity-70 grayscale" : ""}`}
       >
         {hideImages ? (
           <ImagePlaceholder link={link} />
@@ -109,7 +111,7 @@ export function LinkCard({ link, collection, hideImages = false }: CardProps) {
           <FallbackImage
             src={link.image}
             alt={link.image_alt ?? ""}
-            className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            className="size-full object-cover"
             fallback={<ImagePlaceholder link={link} />}
           />
         )}
@@ -117,24 +119,27 @@ export function LinkCard({ link, collection, hideImages = false }: CardProps) {
           <SelectCheckbox id={link.id} title={displayTitle(link)} />
         </div>
         {link.is_favorite && (
-          <span className="absolute top-2 right-2 rounded-full bg-white/90 px-2 py-0.5 text-xs text-amber-500 shadow-sm dark:bg-zinc-900/90">
-            ★
+          <span
+            title="Favorite"
+            className="absolute top-2 right-2 grid size-7 place-items-center rounded-full bg-surface/95 text-accent ring-1 ring-line"
+          >
+            <StarIcon className="size-3.5" fill="currentColor" />
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+      <div className="flex flex-1 flex-col gap-2 px-4 pt-3.5 pb-3">
+        <div className="flex items-center gap-2 text-xs text-muted">
           <Favicon src={link.favicon} />
           <span className="truncate">{link.site_name ?? hostname(link.url)}</span>
           {link.og_type && (
-            <span className="ml-auto shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] uppercase text-zinc-500 dark:bg-zinc-800">
+            <span className="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted uppercase ring-1 ring-line">
               {link.og_type}
             </span>
           )}
         </div>
 
-        <h2 className="line-clamp-2 font-semibold leading-snug">
+        <h2 className="line-clamp-2 text-[15px] leading-snug font-semibold text-ink">
           {/* The stretched link makes the whole card clickable. */}
           <Link href={`/links/${link.id}`} className="after:absolute after:inset-0">
             {displayTitle(link)}
@@ -142,46 +147,50 @@ export function LinkCard({ link, collection, hideImages = false }: CardProps) {
         </h2>
 
         {description && (
-          <p className="line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+          <p className="line-clamp-2 text-sm leading-relaxed text-muted">{description}</p>
         )}
 
         {link.note && (
-          <p className="line-clamp-2 border-l-2 border-amber-300 pl-2 text-xs italic text-zinc-600 dark:border-amber-700 dark:text-zinc-400">
+          <p className="line-clamp-2 border-l-2 border-line pl-2 text-xs text-muted">
             {link.note}
           </p>
         )}
 
         {link.fetch_status === "failed" && link.fetch_error && (
-          <p className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+          <p className="rounded-md bg-subtle px-2 py-1 text-xs text-muted">
             No preview: {link.fetch_error}
           </p>
         )}
 
         <TagList tags={link.tags} keywords={link.keywords} max={4} />
 
-        <div className="mt-auto flex items-center gap-2 pt-2 text-xs text-zinc-400">
+        {/* Wraps in narrow cards (5 per row on a laptop): the buttons go under the date. */}
+        <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line/70 pt-2.5 text-xs text-muted">
           {link.deleted_at ? (
             <TrashCountdown deletedAt={link.deleted_at} className="truncate" />
           ) : collection ? (
             <Link
               href={`/?collection=${collection.id}`}
-              className="relative z-10 truncate rounded px-1 py-0.5 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              className="relative z-10 -ml-1 truncate rounded-md px-1 py-0.5 transition-colors hover:bg-subtle hover:text-ink"
             >
               {collection.icon} {collection.name}
             </Link>
           ) : (
             <time dateTime={link.created_at}>{formatDate(link.created_at)}</time>
           )}
-          <div className="ml-auto flex items-center">
-            <CardActions link={link} />
+          <div className="-mr-1.5 ml-auto flex items-center">
+            <div className={`flex items-center ${quietActions}`}>
+              <CardActions link={link} />
+            </div>
             <a
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
               title="Open link"
-              className="relative z-10 rounded px-1.5 py-1 font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+              aria-label="Open link in a new tab"
+              className="relative z-10 inline-flex size-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-subtle hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none"
             >
-              Visit ↗
+              <ExternalLinkIcon className="size-4" />
             </a>
           </div>
         </div>
@@ -195,16 +204,16 @@ export function LinkCard({ link, collection, hideImages = false }: CardProps) {
 export function LinkRow({ link, collection, hideImages = false }: CardProps) {
   const description = displayDescription(link);
   const iconBox = (
-    <div className="flex size-full items-center justify-center bg-zinc-100 dark:bg-zinc-800">
+    <div className="flex size-full items-center justify-center bg-subtle">
       <Favicon src={link.favicon} className="size-5" />
     </div>
   );
   return (
-    <li className="group relative flex items-center gap-3 py-3 pr-4 pl-2 hover:bg-zinc-50 has-checked:bg-indigo-50/80 dark:hover:bg-zinc-800/50 dark:has-checked:bg-indigo-500/10">
+    <li className="group relative flex items-center gap-3 py-2.5 pr-3 pl-2 transition-colors hover:bg-subtle/60 has-checked:bg-brand-soft/70">
       <div className={`-mr-1 shrink-0 ${checkboxReveal}`}>
         <SelectCheckbox id={link.id} title={displayTitle(link)} />
       </div>
-      <div className="hidden h-12 w-20 shrink-0 overflow-hidden rounded-md border border-zinc-100 sm:block dark:border-zinc-800">
+      <div className="hidden h-11 w-18 shrink-0 overflow-hidden rounded-md border border-line sm:block">
         {hideImages ? (
           iconBox
         ) : (
@@ -217,9 +226,9 @@ export function LinkRow({ link, collection, hideImages = false }: CardProps) {
           <Link href={`/links/${link.id}`} className="truncate font-medium after:absolute after:inset-0">
             {displayTitle(link)}
           </Link>
-          {link.is_favorite && <span className="text-xs text-amber-500">★</span>}
+          {link.is_favorite && <StarIcon className="size-3.5 shrink-0 text-accent" fill="currentColor" aria-label="Favorite" />}
         </div>
-        <p className="mt-0.5 truncate text-xs text-zinc-500">
+        <p className="mt-0.5 truncate text-xs text-muted">
           {hostname(link.url)}
           {collection && ` · ${collection.icon} ${collection.name}`}
           {link.fetch_status === "pending" && " · fetching preview…"}
@@ -234,11 +243,11 @@ export function LinkRow({ link, collection, hideImages = false }: CardProps) {
       {link.deleted_at ? (
         <TrashCountdown deletedAt={link.deleted_at} className="hidden shrink-0 text-xs md:block" />
       ) : (
-        <time dateTime={link.created_at} className="hidden shrink-0 text-xs text-zinc-400 md:block">
+        <time dateTime={link.created_at} className="hidden shrink-0 text-xs text-muted md:block">
           {formatDate(link.created_at)}
         </time>
       )}
-      <div className="flex shrink-0 items-center gap-0.5">
+      <div className={`flex shrink-0 items-center gap-0.5 ${quietActions}`}>
         <CardActions link={link} />
       </div>
       <SelectOverlay id={link.id} />

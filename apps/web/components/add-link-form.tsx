@@ -78,16 +78,16 @@ export function AddLinkForm({
           onPaste={handlePaste}
           onKeyDown={handleKeyDown}
           aria-describedby={many ? "url-summary" : undefined}
-          className="min-w-0 flex-1 resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm leading-5 outline-none placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-zinc-800"
+          className="min-h-10 min-w-0 flex-1 resize-none rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm leading-5 transition-colors outline-none placeholder:text-muted/80 focus:border-brand/50 focus:bg-surface focus:ring-3 focus:ring-brand/15"
         />
         <select
           name="collection_id"
           defaultValue={defaultCollection ?? ""}
           key={defaultCollection ?? "none"}
           aria-label="Folder"
-          className="rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 sm:max-w-44"
+          className="h-10 rounded-lg border border-line bg-surface px-2.5 text-sm text-ink transition-colors outline-none focus:border-brand/50 focus:ring-3 focus:ring-brand/15 sm:max-w-44"
         >
-          <option value="">📥 No folder</option>
+          <option value="">No folder</option>
           {collections.map((collection) => (
             <option key={collection.id} value={collection.id}>
               {collection.icon} {collection.name}
@@ -97,7 +97,7 @@ export function AddLinkForm({
         <SubmitButton
           pendingText={many ? `Saving ${urls.length} links…` : "Fetching preview…"}
           disabled={tooMany}
-          className="whitespace-nowrap"
+          className="h-10 whitespace-nowrap"
         >
           {many ? `Save ${urls.length} links` : "Save link"}
         </SubmitButton>
@@ -106,15 +106,15 @@ export function AddLinkForm({
       {many && (
         <p id="url-summary" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span
-            className={`rounded-full px-2.5 py-0.5 font-medium ${
+            className={`rounded-md px-2 py-0.5 font-medium ${
               tooMany
-                ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
-                : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200"
+                ? "bg-danger-soft text-danger"
+                : "bg-brand-soft text-brand-ink"
             }`}
           >
             {urls.length} links found
           </span>
-          <span className="text-zinc-500 dark:text-zinc-400">
+          <span className="text-muted">
             {tooMany
               ? `Paste up to ${MAX_LINKS_PER_PASTE} at a time, or use Import / Export for longer lists.`
               : "Each is saved as its own link; previews load in the background."}
@@ -123,20 +123,19 @@ export function AddLinkForm({
         </p>
       )}
 
+      {/* Takes no room until there is something to say. */}
       <p
         aria-live="polite"
-        className={`min-h-5 text-sm ${
-          state.status === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"
-        }`}
+        className={`text-sm empty:hidden ${state.status === "error" ? "text-danger" : "text-brand-ink"}`}
       >
-        {state.message}{" "}
+        {state.message && `${state.message} `}
         {state.existingId && (
-          <Link href={`/links/${state.existingId}`} className="font-medium underline">
+          <Link href={`/links/${state.existingId}`} className="font-medium text-brand underline-offset-2 hover:underline">
             View it
           </Link>
         )}
         {state.status === "idle" && initialUrl && (
-          <span className="text-zinc-500">Press “Save link” to add the page you came from.</span>
+          <span className="text-muted">Press “Save link” to add the page you came from.</span>
         )}
       </p>
     </form>

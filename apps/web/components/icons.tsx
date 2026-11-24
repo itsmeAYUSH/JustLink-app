@@ -27,6 +27,15 @@ export const LinkIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const LinkOffIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 17H7A5 5 0 0 1 7 7" />
+    <path d="M15 7h2a5 5 0 0 1 4 8" />
+    <path d="M8 12h4" />
+    <path d="m2 2 20 20" />
+  </Icon>
+);
+
 export const MailIcon = (props: IconProps) => (
   <Icon {...props}>
     <rect x="3" y="5" width="18" height="14" rx="2.5" />
@@ -225,6 +234,89 @@ export const TrashIcon = (props: IconProps) => (
     <path d="M14 11v6" />
     <path d="M5.5 7 6.5 19a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2l1-12" />
     <path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7" />
+  </Icon>
+);
+
+export const LayersIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+    <path d="m3 13 9 5 9-5" />
+  </Icon>
+);
+
+export const StarIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8L12 3.5Z" />
+  </Icon>
+);
+
+export const InboxIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 13h5l1.5 3h5L16 13h5" />
+    <path d="M5.5 5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5l2.5-8Z" />
+  </Icon>
+);
+
+export const ArchiveIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="4" width="18" height="5" rx="1.5" />
+    <path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9" />
+    <path d="M10 13h4" />
+  </Icon>
+);
+
+export const HashIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M5 9h14M5 15h14M10 4 8 20M16 4l-2 16" />
+  </Icon>
+);
+
+export const GridIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+    <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+    <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+    <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
+  </Icon>
+);
+
+export const ListIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 6h11M9 12h11M9 18h11" />
+    <path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" strokeWidth={2.6} />
+  </Icon>
+);
+
+export const PlusIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const LogOutIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+    <path d="M10 16.5 5.5 12 10 7.5M5.5 12H15" />
+  </Icon>
+);
+
+export const PanelLeftIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="4" width="18" height="16" rx="2.5" />
+    <path d="M9 4v16" />
+  </Icon>
+);
+
+export const ColumnsIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M9 4v16M15 4v16" />
+  </Icon>
+);
+
+export const MenuIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
   </Icon>
 );
 

@@ -8,8 +8,6 @@ export type Profile = {
   email: string | null;
   name: string | null;
   avatarUrl: string | null;
-  /** A new address waiting for its confirmation link to be opened. */
-  pendingEmail: string | null;
 };
 
 export function profileFromUser(user: User | null | undefined): Profile | null {
@@ -21,9 +19,7 @@ export function profileFromUser(user: User | null | undefined): Profile | null {
     email: user.email ?? null,
     name: text(meta.full_name),
     // Only our own https storage links (or http on localhost) are shown as pictures.
-    avatarUrl: avatar && /^https?:\/\//i.test(avatar) ? avatar : null,
-    pendingEmail: user.new_email ?? null,
-  };
+    avatarUrl: avatar && /^https?:\/\//i.test(avatar) ? avatar : null,  };
 }
 
 /** "Ayush" or "ayush@example.com": what to call the person. */
@@ -31,12 +27,18 @@ export function displayName(profile: Profile): string {
   return profile.name || profile.email || "You";
 }
 
-/** One or two letters for an avatar without a photo. */
+/**
+ * What the sidebar calls the person: their name, or without one the part of their
+ * email before the @ (the full address isn't shown there).
+ */
+export function shortName(profile: Profile): string {
+  return profile.name || profile.email?.replace(/@.*/, "") || "You";
+}
+
+/** The first letter of the first name (or of the email without a name), for an avatar without a photo. */
 export function initials(profile: Profile): string {
-  const source = profile.name || profile.email || "?";
-  const words = source.replace(/@.*/, "").split(/[\s._-]+/).filter(Boolean);
-  const letters = words.length > 1 ? `${words[0]![0]}${words[1]![0]}` : source.slice(0, 1);
-  return letters.toUpperCase();
+  const source = (profile.name || profile.email || "?").trim();
+  return (Array.from(source)[0] ?? "?").toUpperCase();
 }
 
 /** Profile photo uploads: the browser crops and shrinks them to this square first. */

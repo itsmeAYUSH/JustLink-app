@@ -26,10 +26,10 @@ export function ImagesToggle({ hidden }: { hidden: boolean }) {
       aria-pressed={hidden}
       title={label}
       aria-label={label}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none disabled:opacity-60 ${
+      className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none disabled:opacity-60 ${
         hidden
-          ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200"
-          : "border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          ? "border-brand/40 bg-brand-soft text-brand-ink"
+          : "border-line bg-surface text-muted hover:bg-subtle hover:text-ink"
       }`}
     >
       {hidden ? <ImageOffIcon className="size-4" /> : <ImageIcon className="size-4" />}

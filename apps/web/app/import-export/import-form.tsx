@@ -18,7 +18,7 @@ export function ImportForm() {
           type="file"
           name="file"
           accept=".html,.htm,.txt,.csv,text/html,text/plain"
-          className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-zinc-700 dark:file:bg-white dark:file:text-zinc-900"
+          className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-subtle file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink hover:file:bg-line"
         />
       </label>
       <label className="block space-y-1">
@@ -27,7 +27,7 @@ export function ImportForm() {
           name="text"
           rows={4}
           placeholder={"https://nextjs.org/docs\nhttps://supabase.com/docs\n…one per line, or any text containing links"}
-          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-xs outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950"
+          className="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs outline-none focus:border-muted/50"
         />
       </label>
       <label className="flex items-center gap-2 text-sm">
@@ -39,7 +39,7 @@ export function ImportForm() {
         {state.message && (
           <span
             aria-live="polite"
-            className={`text-sm ${state.status === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}
+            className={`text-sm ${state.status === "error" ? "text-danger" : "text-brand-ink"}`}
           >
             {state.message}{" "}
             {state.status === "success" && (

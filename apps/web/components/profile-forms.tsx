@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useRef, useState, useTransition, type ReactNode } from "react";
+import { useActionState, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { signOut } from "@/app/actions";
 import {
-  changeEmail,
   changePassword,
+  deleteAccount,
   removeAvatar,
   updateName,
   uploadAvatar,
@@ -15,7 +15,7 @@ import { lockNow, removeKnownPin, setFolderLock, signInToRemovePin } from "@/app
 import { AVATAR_SIZE, type Profile } from "@/lib/profile";
 import type { VaultStatus } from "@/lib/vault";
 import { Avatar } from "./avatar";
-import { AlertIcon, CheckIcon, LockIcon, SpinnerIcon } from "./icons";
+import { AlertIcon, CheckIcon, LockIcon, MailIcon, SpinnerIcon, TrashIcon } from "./icons";
 import { SubmitButton } from "./submit-button";
 import { useToast } from "./toast";
 import { SetupPin, UnlockPin, useVault } from "./vault";
@@ -23,10 +23,10 @@ import { SetupPin, UnlockPin, useVault } from "./vault";
 const idle: ProfileState = { status: "idle" };
 
 const field =
-  "h-11 w-full rounded-xl border border-zinc-300 bg-white px-3.5 text-sm outline-none transition placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-indigo-400";
+  "h-11 w-full rounded-xl border border-line bg-surface px-3.5 text-sm outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/15";
 
 const secondaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800";
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-subtle disabled:opacity-60";
 
 /** A settings card: what it is on top, the controls, then a footer with the save button. */
 function Section({
@@ -45,15 +45,15 @@ function Section({
   return (
     <section
       id={id}
-      className="scroll-mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="scroll-mt-6 overflow-hidden rounded-2xl border border-line bg-surface"
     >
       <div className="p-6">
         <h2 className="text-base font-semibold">{title}</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+        <p className="mt-1 text-sm text-muted">{description}</p>
         <div className="mt-5">{children}</div>
       </div>
       {footer && (
-        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-zinc-100 bg-zinc-50/70 px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-line bg-subtle/70 px-6 py-3">
           {footer}
         </div>
       )}
@@ -67,7 +67,7 @@ function StatusLine({ state }: { state: ProfileState }) {
   return (
     <p
       role={good ? "status" : "alert"}
-      className={`mr-auto flex items-start gap-1.5 text-sm ${good ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+      className={`mr-auto flex items-start gap-1.5 text-sm ${good ? "text-brand-ink" : "text-danger"}`}
     >
       {good ? <CheckIcon className="mt-0.5 size-4 shrink-0" /> : <AlertIcon className="mt-0.5 size-4 shrink-0" />}
       {state.message}
@@ -133,7 +133,7 @@ export function PhotoSection({ profile }: { profile: Profile }) {
     >
       <div
         className={`flex flex-wrap items-center gap-5 rounded-2xl border-2 border-dashed p-4 transition-colors ${
-          dragging ? "border-indigo-400 bg-indigo-50/60 dark:bg-indigo-500/10" : "border-transparent"
+          dragging ? "border-brand bg-brand-soft/60" : "border-transparent"
         }`}
         onDragOver={(event) => {
           event.preventDefault();
@@ -149,7 +149,7 @@ export function PhotoSection({ profile }: { profile: Profile }) {
         <div className="relative">
           <Avatar profile={profile} size={80} src={preview} />
           {pending && (
-            <span className="absolute inset-0 grid place-items-center rounded-full bg-black/40 text-white">
+            <span className="absolute inset-0 grid place-items-center rounded-full bg-ink/50 text-canvas">
               <SpinnerIcon className="size-5" />
             </span>
           )}
@@ -160,7 +160,7 @@ export function PhotoSection({ profile }: { profile: Profile }) {
               type="button"
               disabled={pending}
               onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:bg-brand/90 disabled:opacity-60"
             >
               {profile.avatarUrl ? "Change photo" : "Upload photo"}
             </button>
@@ -182,7 +182,7 @@ export function PhotoSection({ profile }: { profile: Profile }) {
               </button>
             )}
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Or drop a picture here. JPEG, PNG or WebP.</p>
+          <p className="text-xs text-muted">Or drop a picture here. JPEG, PNG or WebP.</p>
         </div>
         <input
           ref={inputRef}
@@ -235,44 +235,16 @@ export function NameSection({ name }: { name: string | null }) {
 
 // ─── Email ──────────────────────────────────────────────────────────────────
 
-export function EmailSection({ email, pendingEmail }: { email: string | null; pendingEmail: string | null }) {
-  const [state, formAction] = useActionState(changeEmail, idle);
+/** The address the account signs in with. Each account has one, and it can't be changed. */
+export function EmailSection({ email }: { email: string | null }) {
   return (
-    <form action={formAction}>
-      <Section
-        title="Email"
-        description={
-          <>
-            You sign in with <strong className="font-medium text-zinc-800 dark:text-zinc-200">{email ?? "no email"}</strong>.
-            A new address takes effect once you open the confirmation link we send.
-          </>
-        }
-        footer={
-          <>
-            <StatusLine state={state} />
-            <SubmitButton pendingText="Sending…">Change email</SubmitButton>
-          </>
-        }
-      >
-        {pendingEmail && (
-          <p className="mb-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-            Waiting for you to confirm <strong className="font-medium">{pendingEmail}</strong>. Check that inbox.
-          </p>
-        )}
-        <label htmlFor="profile-email" className="sr-only">
-          New email
-        </label>
-        <input
-          id="profile-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="new@example.com"
-          required
-          className={`${field} max-w-sm`}
-        />
-      </Section>
-    </form>
+    <Section title="Email" description="The address you sign in with. Each account has one email, and it can't be changed.">
+      <p className="flex h-11 max-w-sm items-center gap-2.5 rounded-xl border border-line bg-subtle px-3.5 text-sm text-ink">
+        <MailIcon className="size-4 shrink-0 text-muted" />
+        <span className="min-w-0 flex-1 truncate">{email ?? "No email"}</span>
+        <LockIcon className="size-3.5 shrink-0 text-muted" aria-label="Can't be changed" />
+      </p>
+    </Section>
   );
 }
 
@@ -349,7 +321,7 @@ export function PinSection({ status, lockedCount }: { status: VaultStatus; locke
   } else if (step === "remove-confirm") {
     body = (
       <div className="space-y-4 text-center">
-        <p className="text-sm text-zinc-600 dark:text-zinc-300">
+        <p className="text-sm text-muted">
           Remove your PIN? {lockedCount > 0 ? `Your ${folders} will unlock.` : ""} Nothing is deleted, and you can set a new PIN any time.
         </p>
         <div className="flex justify-center gap-2">
@@ -364,7 +336,7 @@ export function PinSection({ status, lockedCount }: { status: VaultStatus; locke
                 else toast.show({ message: result.message, tone: "error" });
               })
             }
-            className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-on-brand hover:bg-danger/90 disabled:opacity-60"
           >
             {pending && <SpinnerIcon />}
             Remove PIN
@@ -381,19 +353,19 @@ export function PinSection({ status, lockedCount }: { status: VaultStatus; locke
       description="One 4-digit PIN locks any folders you choose. Like a password-protected folder, a locked folder asks for the PIN every time you open it and locks again as soon as you leave."
     >
       {body ? (
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50/60 p-6 dark:border-zinc-800 dark:bg-zinc-950/40">
+        <div className="rounded-2xl border border-line bg-subtle/60 p-6">
           {body}
           {step !== "remove-confirm" && <div className="mt-5 flex justify-center">{cancel}</div>}
         </div>
       ) : status.hasPin ? (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-zinc-200 px-4 py-3 dark:border-zinc-800">
-            <span className="grid size-9 place-items-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line px-4 py-3">
+            <span className="grid size-9 place-items-center rounded-lg bg-brand-soft text-brand">
               <LockIcon className="size-4" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">PIN is set · {folders}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Locked folders ask for it every time they&apos;re opened.</p>
+              <p className="text-xs text-muted">Locked folders ask for it every time they&apos;re opened.</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -404,24 +376,24 @@ export function PinSection({ status, lockedCount }: { status: VaultStatus; locke
               Remove PIN
             </button>
             <form action={signInToRemovePin} className="ml-auto">
-              <button type="submit" className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-300">
+              <button type="submit" className="text-sm font-medium text-brand hover:underline">
                 Forgot PIN?
               </button>
             </form>
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-dashed border-zinc-300 px-4 py-4 dark:border-zinc-700">
-          <span className="grid size-9 place-items-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-dashed border-line px-4 py-4">
+          <span className="grid size-9 place-items-center rounded-lg bg-subtle text-muted">
             <LockIcon className="size-4" />
           </span>
-          <p className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-300">
+          <p className="min-w-0 flex-1 text-sm text-muted">
             No PIN yet. Set one to lock folders you want to keep private.
           </p>
           <button
             type="button"
             onClick={() => setStep("setup")}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand hover:bg-brand/90"
           >
             Set a PIN
           </button>
@@ -470,21 +442,21 @@ export function LockedFoldersSection({ folders, hasPin }: { folders: LockableFol
       description="Choose which folders need your PIN. A locked folder is hidden everywhere else, asks for the PIN every time it's opened, and can't be shared."
     >
       {!hasPin && (
-        <p className="mb-4 rounded-xl bg-zinc-100 px-3.5 py-2.5 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <p className="mb-4 rounded-xl bg-subtle px-3.5 py-2.5 text-sm text-muted">
           Set a PIN above first, then lock any folder here.
         </p>
       )}
       {folders.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">You don&apos;t have any folders yet.</p>
+        <p className="text-sm text-muted">You don&apos;t have any folders yet.</p>
       ) : (
-        <ul className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line">
           {folders.map((folder) => (
             <li key={folder.id} className="flex items-center gap-3 px-4 py-3">
               <span aria-hidden="true" className="w-6 text-center text-lg">
                 {folder.icon}
               </span>
               <span className="min-w-0 flex-1 truncate text-sm font-medium">{folder.name}</span>
-              {folder.locked && <LockIcon className="size-4 text-indigo-600 dark:text-indigo-300" />}
+              {folder.locked && <LockIcon className="size-4 text-brand" />}
               <button
                 type="button"
                 role="switch"
@@ -492,16 +464,16 @@ export function LockedFoldersSection({ folders, hasPin }: { folders: LockableFol
                 aria-label={`Lock ${folder.name}`}
                 disabled={!hasPin || busy !== null}
                 onClick={() => void toggle(folder)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                  folder.locked ? "bg-indigo-600 dark:bg-indigo-500" : "bg-zinc-300 dark:bg-zinc-700"
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                  folder.locked ? "bg-brand" : "bg-line"
                 }`}
               >
                 <span
-                  className={`grid size-5 place-items-center rounded-full bg-white shadow transition-transform ${
+                  className={`grid size-5 place-items-center rounded-full bg-surface shadow transition-transform ${
                     folder.locked ? "translate-x-5.5" : "translate-x-0.5"
                   }`}
                 >
-                  {busy === folder.id && <SpinnerIcon className="size-3 text-zinc-500" />}
+                  {busy === folder.id && <SpinnerIcon className="size-3 text-muted" />}
                 </span>
               </button>
             </li>
@@ -523,5 +495,106 @@ export function AccountSection() {
         </SubmitButton>
       </form>
     </Section>
+  );
+}
+
+/** Closes the account after the password is entered again; see deleteAccount for what that does. */
+export function DeleteAccountSection({ email }: { email: string | null }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const [state, formAction, pending] = useActionState(deleteAccount, idle);
+
+  return (
+    <section className="rounded-2xl border border-danger/30 bg-surface">
+      <div className="flex flex-wrap items-center gap-4 p-6">
+        <div className="min-w-60 flex-1">
+          <h2 className="text-base font-semibold text-danger">Delete account</h2>
+          <p className="mt-1 text-sm text-muted">
+            Closes your account: you&apos;re signed out everywhere and can&apos;t sign in with{" "}
+            {email ? <strong className="font-medium text-ink">{email}</strong> : "this email"} again. Shared folders stop
+            being shared.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => dialogRef.current?.showModal()}
+          aria-haspopup="dialog"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-danger/40 bg-surface px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft focus-visible:ring-2 focus-visible:ring-danger/40 focus-visible:outline-none"
+        >
+          <TrashIcon className="size-4" />
+          Delete account
+        </button>
+      </div>
+
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        onCancel={(event) => {
+          if (pending) event.preventDefault();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget && !pending) event.currentTarget.close();
+        }}
+        className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-line bg-surface p-0 text-left text-base font-normal text-ink shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm open:motion-safe:animate-fade-up"
+      >
+        <form action={formAction} className="p-6">
+          <div className="flex gap-4">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-danger-soft text-danger">
+              <AlertIcon className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 id={titleId} className="text-lg font-semibold">
+                Delete your account?
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                You&apos;ll be signed out on every device, and this account can&apos;t be signed in to again. Enter your
+                password to confirm.
+              </p>
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Your password"
+                aria-label="Your password"
+                required
+                className={`${field} mt-4`}
+              />
+            </div>
+          </div>
+
+          {state.status === "error" && (
+            <p role="alert" className="mt-4 flex items-start gap-1.5 rounded-lg bg-danger-soft p-3 text-sm text-danger">
+              <AlertIcon className="mt-0.5 size-4 shrink-0" />
+              {state.message}
+            </p>
+          )}
+
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => dialogRef.current?.close()}
+              disabled={pending}
+              className={secondaryButton}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex min-w-36 items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:bg-danger/90 focus-visible:ring-2 focus-visible:ring-danger/50 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-80"
+            >
+              {pending ? (
+                <>
+                  <SpinnerIcon />
+                  Deleting…
+                </>
+              ) : (
+                "Delete account"
+              )}
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </section>
   );
 }

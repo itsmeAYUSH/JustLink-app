@@ -73,11 +73,11 @@ function validatePassword(value: string, mode: AuthMode): string | undefined {
 type Score = 0 | 1 | 2 | 3 | 4;
 
 const strengthLevels: Record<Score, { label: string; bar: string; text: string }> = {
-  0: { label: "Too short", bar: "bg-rose-500", text: "text-rose-600 dark:text-rose-400" },
-  1: { label: "Weak", bar: "bg-orange-500", text: "text-orange-600 dark:text-orange-400" },
-  2: { label: "Fair", bar: "bg-amber-400", text: "text-amber-600 dark:text-amber-300" },
-  3: { label: "Good", bar: "bg-lime-500", text: "text-lime-600 dark:text-lime-400" },
-  4: { label: "Strong", bar: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+  0: { label: "Too short", bar: "bg-danger", text: "text-danger" },
+  1: { label: "Weak", bar: "bg-accent", text: "text-accent" },
+  2: { label: "Fair", bar: "bg-accent", text: "text-accent" },
+  3: { label: "Good", bar: "bg-brand", text: "text-brand" },
+  4: { label: "Strong", bar: "bg-brand", text: "text-brand" },
 };
 
 /** A hint for the person, not a rule: the server only enforces the minimum length. */
@@ -112,14 +112,13 @@ export function LoginForm({
   initialMode,
 }: {
   next: string;
-  initialError?: string;
+  /** From the URL: a failed email link, or a just-deleted account. */
+  initialError?: { title: string; message: string };
   initialMode: AuthMode;
 }) {
   const [state, formAction, isPending] = useActionState<AuthState, FormData>(
     authenticate,
-    initialError
-      ? { status: "error", title: "We couldn't confirm your email", message: initialError }
-      : { status: "idle" },
+    initialError ? { status: "error", ...initialError } : { status: "idle" },
   );
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
@@ -229,15 +228,15 @@ export function LoginForm({
   return (
     <div>
       <div className="text-center">
-        <h1 key={mode} className="text-[26px] font-semibold tracking-tight text-zinc-900 motion-safe:animate-fade-in dark:text-white">
+        <h1 key={mode} className="text-[26px] font-semibold tracking-tight text-ink motion-safe:animate-fade-in">
           {t.title}
         </h1>
-        <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">{t.subtitle}</p>
+        <p className="mt-1.5 text-sm text-muted">{t.subtitle}</p>
       </div>
 
       <ModeSwitch mode={mode} onChange={switchMode} />
 
-      <form ref={formRef} action={formAction} onSubmit={handleSubmit} noValidate className="mt-7 space-y-5">
+      <form ref={formRef} action={formAction} onSubmit={handleSubmit} noValidate className="mt-7 space-y-5 shorter:mt-5 shorter:space-y-4">
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="intent" value={mode} />
 
@@ -291,7 +290,7 @@ export function LoginForm({
               aria-pressed={showPassword}
               aria-controls="password"
               title={showPassword ? "Hide password" : "Show password"}
-              className="grid size-9 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none dark:hover:bg-white/10 dark:hover:text-zinc-200"
+              className="grid size-9 place-items-center rounded-lg text-muted transition hover:bg-subtle hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none"
             >
               {showPassword ? <EyeOffIcon className="size-[18px]" /> : <EyeIcon className="size-[18px]" />}
             </button>
@@ -299,7 +298,7 @@ export function LoginForm({
           footer={
             <>
               {capsLock && (
-                <p className="flex items-center gap-1.5 text-[13px] text-amber-600 motion-safe:animate-fade-down dark:text-amber-400">
+                <p className="flex items-center gap-1.5 text-[13px] text-accent motion-safe:animate-fade-down">
                   <CapsLockIcon className="size-4" />
                   Caps Lock is on
                 </p>
@@ -311,7 +310,7 @@ export function LoginForm({
                       <span
                         key={step}
                         className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                          score >= step ? strength.bar : "bg-zinc-200 dark:bg-white/10"
+                          score >= step ? strength.bar : "bg-line"
                         }`}
                       />
                     ))}
@@ -326,19 +325,19 @@ export function LoginForm({
         {serverError?.title && (
           <div
             role="alert"
-            className="flex gap-3 rounded-xl border border-rose-200 bg-rose-50/90 p-3.5 motion-safe:animate-fade-down dark:border-rose-400/20 dark:bg-rose-500/10"
+            className="flex gap-3 rounded-xl border border-danger/30 bg-danger-soft/90 p-3.5 motion-safe:animate-fade-down"
           >
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-danger-soft text-danger">
               <AlertIcon className="size-[18px]" />
             </span>
             <div className="min-w-0 text-sm">
-              <p className="font-medium text-rose-900 dark:text-rose-100">{serverError.title}</p>
-              <p className="mt-0.5 text-rose-700 dark:text-rose-200/80">{serverError.message}</p>
+              <p className="font-medium text-danger">{serverError.title}</p>
+              <p className="mt-0.5 text-danger">{serverError.message}</p>
               {suggestion && (
                 <button
                   type="button"
                   onClick={() => switchMode(suggestion)}
-                  className="mt-2 inline-flex items-center gap-1 font-medium text-rose-900 underline decoration-rose-300 underline-offset-4 hover:decoration-rose-900 dark:text-rose-100 dark:decoration-rose-400/50 dark:hover:decoration-rose-100"
+                  className="mt-2 inline-flex items-center gap-1 font-medium text-danger underline decoration-danger underline-offset-4 hover:decoration-danger"
                 >
                   {suggestion === "signin" ? "Sign in instead" : "New here? Create an account"}
                   <ArrowRightIcon className="size-3.5" />
@@ -351,13 +350,8 @@ export function LoginForm({
         <button
           type="submit"
           disabled={isPending}
-          className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-linear-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-[15px] font-semibold text-white shadow-lg ring-1 shadow-violet-600/30 ring-white/10 transition-all ring-inset hover:shadow-xl hover:shadow-violet-600/40 hover:brightness-110 focus-visible:ring-4 focus-visible:ring-violet-500/40 focus-visible:outline-none active:scale-[0.985] disabled:cursor-wait disabled:brightness-95"
+          className="group relative flex h-12 w-full shorter:h-11 items-center justify-center gap-2 rounded-xl bg-brand text-[15px] font-semibold text-on-brand transition-colors hover:bg-brand/90 focus-visible:ring-4 focus-visible:ring-brand/30 focus-visible:outline-none active:scale-[0.99] disabled:cursor-wait disabled:opacity-80"
         >
-          {/* Light sweep on hover. */}
-          <span
-            aria-hidden="true"
-            className="absolute inset-y-0 -left-full w-full bg-linear-to-r from-transparent via-white/25 to-transparent transition-[left] duration-700 ease-out group-hover:left-full"
-          />
           {isPending ? (
             <>
               <SpinnerIcon />
@@ -372,12 +366,12 @@ export function LoginForm({
         </button>
       </form>
 
-      <p className="mt-7 text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mt-7 text-center text-sm text-muted shorter:mt-5">
         {t.switchPrompt}{" "}
         <button
           type="button"
           onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
-          className="rounded font-semibold text-indigo-600 underline-offset-4 hover:text-indigo-500 hover:underline focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none dark:text-indigo-300 dark:hover:text-indigo-200"
+          className="rounded font-semibold text-brand underline-offset-4 hover:text-brand hover:underline focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none"
         >
           {t.switchAction}
         </button>
@@ -395,12 +389,12 @@ function ModeSwitch({ mode, onChange }: { mode: AuthMode; onChange: (mode: AuthM
     <div
       role="group"
       aria-label="Sign in or create an account"
-      className="relative mt-7 grid grid-cols-2 rounded-xl border border-zinc-200/80 bg-zinc-100/80 p-1 dark:border-white/10 dark:bg-white/[0.04]"
+      className="relative mt-7 grid grid-cols-2 rounded-xl bg-subtle p-1 shorter:mt-5"
     >
       {/* Sliding highlight behind the active option. */}
       <span
         aria-hidden="true"
-        className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-lg bg-white shadow-sm ring-1 ring-zinc-900/5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] dark:bg-white/10 dark:ring-white/10 ${
+        className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-lg bg-surface shadow-xs ring-1 ring-line transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           mode === "signup" ? "translate-x-full" : "translate-x-0"
         }`}
       />
@@ -410,10 +404,10 @@ function ModeSwitch({ mode, onChange }: { mode: AuthMode; onChange: (mode: AuthM
           type="button"
           aria-pressed={mode === option.value}
           onClick={() => onChange(option.value)}
-          className={`relative z-10 h-9 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none ${
+          className={`relative z-10 h-9 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none ${
             mode === option.value
-              ? "text-zinc-900 dark:text-white"
-              : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+              ? "text-ink"
+              : "text-muted hover:text-ink"
           }`}
         >
           {option.label}
@@ -438,7 +432,7 @@ function TextField({ id, label, icon, error, invalid, inputRef, trailing, footer
   const errorId = `${id}-error`;
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-[13px] font-medium text-zinc-700 dark:text-zinc-300">
+      <label htmlFor={id} className="block text-[13px] font-medium text-ink">
         {label}
       </label>
       <div className="relative">
@@ -447,18 +441,18 @@ function TextField({ id, label, icon, error, invalid, inputRef, trailing, footer
           id={id}
           aria-invalid={invalid || undefined}
           aria-describedby={error ? errorId : undefined}
-          className={`auth-input peer h-12 w-full rounded-xl border bg-white/70 pl-11 text-[15px] text-zinc-900 shadow-xs transition outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-4 dark:bg-white/[0.04] dark:text-white dark:placeholder:text-zinc-500 dark:focus:bg-white/[0.07] ${
+          className={`auth-input peer h-12 w-full shorter:h-11 rounded-xl border bg-canvas pl-11 text-[15px] text-ink transition outline-none placeholder:text-muted/80 focus:bg-surface focus:ring-4 ${
             trailing ? "pr-12" : "pr-4"
           } ${
             invalid
-              ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/15 dark:border-rose-400/70 dark:focus:border-rose-400 dark:focus:ring-rose-400/15"
-              : "border-zinc-200 hover:border-zinc-300 focus:border-indigo-500 focus:ring-indigo-500/15 dark:border-white/10 dark:hover:border-white/20 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20"
+              ? "border-danger focus:border-danger focus:ring-danger/15"
+              : "border-line hover:border-muted/40 focus:border-brand/60 focus:ring-brand/15"
           }`}
           {...inputProps}
         />
         <span
           className={`pointer-events-none absolute inset-y-0 left-3.5 flex items-center transition-colors ${
-            invalid ? "text-rose-500 dark:text-rose-400" : "text-zinc-400 peer-focus:text-indigo-500 dark:peer-focus:text-indigo-300"
+            invalid ? "text-danger" : "text-muted peer-focus:text-brand"
           }`}
         >
           {icon}
@@ -466,7 +460,7 @@ function TextField({ id, label, icon, error, invalid, inputRef, trailing, footer
         {trailing && <div className="absolute inset-y-0 right-1.5 flex items-center">{trailing}</div>}
       </div>
       {error && (
-        <p id={errorId} className="flex items-start gap-1.5 text-[13px] leading-5 text-rose-600 motion-safe:animate-fade-down dark:text-rose-400">
+        <p id={errorId} className="flex items-start gap-1.5 text-[13px] leading-5 text-danger motion-safe:animate-fade-down">
           <AlertIcon className="mt-0.5 size-4 shrink-0" />
           {error}
         </p>
@@ -480,25 +474,24 @@ function CheckEmail({ email, onBack }: { email: string; onBack: () => void }) {
   return (
     <div className="text-center motion-safe:animate-fade-up" role="status">
       <div className="relative mx-auto w-fit">
-        <span aria-hidden="true" className="absolute inset-0 rounded-2xl bg-violet-500/40 blur-xl" />
-        <span className="relative grid size-16 place-items-center rounded-2xl bg-linear-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-lg ring-1 ring-white/20">
+        <span className="relative grid size-16 place-items-center rounded-2xl bg-brand-soft text-brand">
           <MailIcon className="size-7" />
         </span>
       </div>
-      <h1 className="mt-6 text-[26px] font-semibold tracking-tight text-zinc-900 dark:text-white">Check your inbox</h1>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+      <h1 className="mt-6 text-[26px] font-semibold tracking-tight text-ink">Check your inbox</h1>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
         We sent a confirmation link to
         <br />
-        <span className="font-medium break-all text-zinc-900 dark:text-white">{email}</span>
+        <span className="font-medium break-all text-ink">{email}</span>
       </p>
-      <ol className="mt-7 space-y-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 text-left text-[13px] text-zinc-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-400">
+      <ol className="mt-7 space-y-3 rounded-xl border border-line bg-subtle p-4 text-left text-[13px] text-muted">
         {[
           `Open the email from ${APP_NAME}.`,
           "Click the confirmation link. It signs you in.",
           "Can't find it? Check your spam or promotions folder.",
         ].map((step, index) => (
           <li key={step} className="flex gap-3">
-            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-indigo-100 text-[11px] font-semibold text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-200">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-brand-soft text-[11px] font-semibold text-brand-ink">
               {index + 1}
             </span>
             {step}
@@ -508,7 +501,7 @@ function CheckEmail({ email, onBack }: { email: string; onBack: () => void }) {
       <button
         type="button"
         onClick={onBack}
-        className="mt-7 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-zinc-600 transition hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none dark:text-zinc-400 dark:hover:text-white"
+        className="mt-7 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-muted transition hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none"
       >
         <ArrowLeftIcon className="size-4" />
         Back to sign in

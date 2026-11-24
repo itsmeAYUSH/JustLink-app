@@ -108,6 +108,8 @@ export type Database = {
       set_folder_locked: { Args: { folder: string; locked: boolean }; Returns: undefined };
       reset_vault: { Args: Record<PropertyKey, never>; Returns: Json };
       remove_vault_pin: { Args: Record<PropertyKey, never>; Returns: undefined };
+      account_is_active: { Args: Record<PropertyKey, never>; Returns: boolean };
+      deactivate_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

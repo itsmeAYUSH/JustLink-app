@@ -66,17 +66,17 @@ export function PinInput({
           return (
             <span
               key={index}
-              className={`grid size-14 place-items-center rounded-2xl border-2 bg-white text-2xl transition-colors dark:bg-zinc-950 ${
+              className={`grid size-14 place-items-center rounded-xl border-[1.5px] bg-surface text-2xl transition-colors ${
                 invalid
-                  ? "border-rose-400 dark:border-rose-500/70"
+                  ? "border-danger"
                   : current
-                    ? "border-indigo-500 ring-4 ring-indigo-500/15 dark:border-indigo-400"
+                    ? "border-brand ring-4 ring-brand/15"
                     : filled
-                      ? "border-zinc-400 dark:border-zinc-500"
-                      : "border-zinc-200 dark:border-zinc-700"
+                      ? "border-muted/50"
+                      : "border-line"
               }`}
             >
-              {filled ? <span className="size-3 rounded-full bg-zinc-900 dark:bg-white" /> : null}
+              {filled ? <span className="size-3 rounded-full bg-brand" /> : null}
             </span>
           );
         })}
@@ -176,14 +176,14 @@ export function VaultProvider({ status, children }: { status: VaultStatus; child
         onClick={(event) => {
           if (event.target === event.currentTarget) event.currentTarget.close();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-3xl border border-zinc-200 bg-white p-0 text-left text-base font-normal text-zinc-900 shadow-2xl backdrop:bg-zinc-950/60 backdrop:backdrop-blur-sm open:motion-safe:animate-fade-up dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-line bg-surface p-0 text-left text-base font-normal text-ink shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm open:motion-safe:animate-fade-up"
       >
         <div className="relative p-7">
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
             aria-label="Close"
-            className="absolute top-4 right-4 grid size-8 place-items-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="absolute top-4 right-4 grid size-8 place-items-center rounded-lg text-muted hover:bg-subtle hover:text-ink"
           >
             <XIcon className="size-4" />
           </button>
@@ -202,8 +202,7 @@ export function VaultProvider({ status, children }: { status: VaultStatus; child
 function LockBadge({ open = false }: { open?: boolean }) {
   return (
     <div className="relative mx-auto w-fit">
-      <span aria-hidden="true" className="absolute inset-0 rounded-2xl bg-indigo-500/30 blur-xl" />
-      <span className="relative grid size-14 place-items-center rounded-2xl bg-linear-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-lg ring-1 ring-white/20">
+      <span className="relative grid size-12 place-items-center rounded-xl bg-brand-soft text-brand">
         {open ? <UnlockIcon className="size-6" /> : <LockIcon className="size-6" />}
       </span>
     </div>
@@ -213,7 +212,7 @@ function LockBadge({ open = false }: { open?: boolean }) {
 function Message({ result }: { result: Extract<VaultResult, { ok: false }> | null }) {
   if (!result) return <p className="min-h-5" />;
   return (
-    <p role="alert" className="flex min-h-5 items-start justify-center gap-1.5 text-sm text-rose-600 dark:text-rose-400">
+    <p role="alert" className="flex min-h-5 items-start justify-center gap-1.5 text-sm text-danger">
       <AlertIcon className="mt-0.5 size-4 shrink-0" />
       {result.message}
       {result.blockedUntil && ` Try again after ${new Date(result.blockedUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`}
@@ -228,13 +227,13 @@ function NeedsPin() {
       <LockBadge />
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Set a PIN first</h2>
-        <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1.5 text-sm text-muted">
           Locked folders open with a 4-digit PIN. Set yours on your profile, where you also choose which folders to lock.
         </p>
       </div>
       <Link
         href="/profile#pin"
-        className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand hover:bg-brand/90"
       >
         Set a PIN in your profile
       </Link>
@@ -278,7 +277,7 @@ export function SetupPin({
         <h2 id={titleId} className="text-xl font-semibold tracking-tight">
           {first ? "Type it again" : title}
         </h2>
-        <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1.5 text-sm text-muted">
           {first
             ? "To make sure it's the one you meant."
             : "One PIN for all your locked folders. You'll enter it each time you open one."}
@@ -286,7 +285,7 @@ export function SetupPin({
       </div>
       <PinInput key={first ? "confirm" : "first"} label={first ? "Repeat the PIN" : "New PIN"} onComplete={confirm} disabled={pending} invalid={Boolean(result)} />
       {pending ? (
-        <p className="flex min-h-5 items-center justify-center gap-2 text-sm text-zinc-500">
+        <p className="flex min-h-5 items-center justify-center gap-2 text-sm text-muted">
           <SpinnerIcon /> Saving your PIN…
         </p>
       ) : (
@@ -334,7 +333,7 @@ export function UnlockPin({
         <LockBadge />
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Forgot your PIN?</h2>
-          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1.5 text-sm text-muted">
             Sign in again with your password, and you can remove the PIN. Your locked folders unlock; nothing in them is
             deleted, and you can set a new PIN.
           </p>
@@ -343,13 +342,13 @@ export function UnlockPin({
           <button
             type="button"
             onClick={() => setForgot(false)}
-            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-subtle"
           >
             Back
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand hover:bg-brand/90"
           >
             Sign in again
           </button>
@@ -365,13 +364,13 @@ export function UnlockPin({
         <h2 id={titleId} className="text-xl font-semibold tracking-tight">
           {title}
         </h2>
-        <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1.5 text-sm text-muted">
           {folderId ? "It locks again as soon as you leave." : "Your PIN keeps locked folders private."}
         </p>
       </div>
       <PinInput key={attempt} label="PIN" onComplete={submit} disabled={pending} invalid={Boolean(result)} />
       {pending ? (
-        <p className="flex min-h-5 items-center justify-center gap-2 text-sm text-zinc-500">
+        <p className="flex min-h-5 items-center justify-center gap-2 text-sm text-muted">
           <SpinnerIcon /> Checking…
         </p>
       ) : (
@@ -380,7 +379,7 @@ export function UnlockPin({
       <button
         type="button"
         onClick={() => setForgot(true)}
-        className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+        className="text-sm font-medium text-brand hover:underline"
       >
         Forgot PIN?
       </button>
@@ -390,19 +389,29 @@ export function UnlockPin({
 
 // ─── In the page ────────────────────────────────────────────────────────────
 
-/** Shown instead of a locked folder's links until its PIN is entered, on every visit. */
-export function LockedFolderScreen({ folderId, name }: { folderId: string; name: string }) {
+/**
+ * Shown instead of a locked folder's links until its PIN is entered, on every visit.
+ * The page centres it in the space beside the sidebar.
+ */
+export function LockedFolderScreen({ folderId, name, icon }: { folderId: string; name: string; icon?: string }) {
   const router = useRouter();
   const { status } = useVault();
   return (
-    <section className="mx-auto max-w-md rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <UnlockPin
-        title={`“${name}” is locked`}
-        folderId={folderId}
-        blockedUntil={status.blockedUntil}
-        onDone={() => router.refresh()}
-      />
-    </section>
+    <div className="w-full max-w-sm motion-safe:animate-fade-up">
+      <section className="rounded-2xl border border-line bg-surface p-8 shadow-xl shadow-black/5">
+        <UnlockPin
+          title={`${icon ? `${icon} ` : ""}“${name}” is locked`}
+          folderId={folderId}
+          blockedUntil={status.blockedUntil}
+          onDone={() => router.refresh()}
+        />
+      </section>
+      <p className="mt-4 text-center text-sm">
+        <Link href="/" className="text-muted transition-colors hover:text-ink">
+          ← Back to all links
+        </Link>
+      </p>
+    </div>
   );
 }
 
@@ -449,8 +458,8 @@ export function FolderSession({ folderId }: { folderId: string }) {
   }, [folderId, router]);
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-950/40 dark:text-emerald-100">
-      <UnlockIcon className="size-4 shrink-0" />
+    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-muted">
+      <UnlockIcon className="size-4 shrink-0 text-brand" />
       <span className="min-w-0 flex-1">Unlocked. It locks again as soon as you leave this folder.</span>
       <button
         type="button"
@@ -461,7 +470,7 @@ export function FolderSession({ folderId }: { folderId: string }) {
             router.refresh();
           })
         }
-        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-900 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-60 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-subtle disabled:opacity-60"
       >
         {pending ? <SpinnerIcon className="size-3.5" /> : <LockIcon className="size-3.5" />}
         Lock
@@ -491,13 +500,13 @@ export function RemovePinPrompt({ returnTo = "/profile" }: { returnTo?: string }
     <dialog
       ref={dialogRef}
       onClose={() => router.replace(returnTo)}
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-3xl border border-zinc-200 bg-white p-7 text-center text-base text-zinc-900 shadow-2xl backdrop:bg-zinc-950/60 backdrop:backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-line bg-surface p-7 text-center text-base text-ink shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div className="space-y-5">
         <LockBadge open />
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Remove your PIN?</h2>
-          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1.5 text-sm text-muted">
             Every locked folder unlocks. Their links stay where they are, and you can set a new PIN and lock them again.
           </p>
         </div>
@@ -506,7 +515,7 @@ export function RemovePinPrompt({ returnTo = "/profile" }: { returnTo?: string }
           <button
             type="button"
             onClick={leave}
-            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-subtle"
           >
             Keep it
           </button>
@@ -522,7 +531,7 @@ export function RemovePinPrompt({ returnTo = "/profile" }: { returnTo?: string }
                 } else setResult(outcome);
               })
             }
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-500 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-on-brand hover:bg-danger/90 disabled:opacity-60"
           >
             {pending && <SpinnerIcon />}
             Remove PIN

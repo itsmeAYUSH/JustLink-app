@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { fetchPendingPreviews } from "@/app/actions";
+import { SpinnerIcon } from "./icons";
 import { SubmitButton } from "./submit-button";
 
 /**
@@ -18,8 +19,8 @@ export function PendingBanner({ count }: { count: number }) {
   }, [router]);
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200">
-      <span className="size-2 animate-pulse rounded-full bg-sky-500" />
+    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-muted">
+      <SpinnerIcon className="size-4 text-brand" />
       <span className="flex-1">
         Fetching previews for {count} link{count === 1 ? "" : "s"}…
       </span>

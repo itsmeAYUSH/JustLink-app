@@ -9,12 +9,9 @@ type Props = ComponentProps<"button"> & {
 };
 
 const variants = {
-  primary:
-    "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200",
-  secondary:
-    "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800",
-  danger:
-    "border border-red-200 bg-white text-red-600 hover:bg-red-50 dark:border-red-900 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-950",
+  primary: "bg-brand text-on-brand hover:bg-brand/90",
+  secondary: "border border-line bg-surface text-ink hover:bg-subtle",
+  danger: "border border-danger/30 bg-surface text-danger hover:bg-danger-soft",
 };
 
 /** A submit button that disables itself and shows `pendingText` while its form's action runs. */
@@ -35,7 +32,7 @@ export function SubmitButton({
       type="submit"
       disabled={pending || disabled}
       aria-disabled={pending || disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
       {...props}
     >
       {isThisButton && pendingText ? pendingText : children}

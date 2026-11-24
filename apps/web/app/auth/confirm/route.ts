@@ -32,5 +32,12 @@ export async function GET(request: NextRequest) {
     login.searchParams.set("error", errorMessage);
     return NextResponse.redirect(login);
   }
+
+  // A deleted (switched-off) account can't get back in through an email link either.
+  const { data: active } = await supabase.rpc("account_is_active");
+  if (active === false) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL("/login?account=deleted", origin));
+  }
   return NextResponse.redirect(new URL(next, origin));
 }

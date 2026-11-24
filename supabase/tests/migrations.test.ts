@@ -459,3 +459,63 @@ describe("locked folders open one at a time, for one visit", () => {
     );
   });
 });
+
+describe("deleting an account", () => {
+  const C = "00000000-0000-0000-0000-00000000000c";
+  const call = async <T = any>(sql: string, params: unknown[] = []) => (await rows<{ r: T }>(sql, params))[0]!.r;
+
+  it("switches it off: nothing is erased, but it can't see or change any of it", async () => {
+    await db.exec(`insert into auth.users values ('${C}')`);
+    const shareId = await as(C, async () => {
+      const [folder] = await rows<{ id: string; share_id: string }>(
+        `insert into public.collections (name, is_public) values ('Shared', true) returning id, share_id`,
+      );
+      await db.query(
+        `insert into public.links (url, url_normalized, title, collection_id) values ('https://c.example/', 'c.example', 'Mine', $1)`,
+        [folder!.id],
+      );
+      expect(await call(`select public.account_is_active() as r`)).toBe(true);
+
+      await db.query(`select public.deactivate_account()`);
+
+      expect(await call(`select public.account_is_active() as r`)).toBe(false);
+      expect(await rows(`select id from public.links`)).toEqual([]);
+      expect(await rows(`select id from public.collections`)).toEqual([]);
+      await expect(
+        db.query(`insert into public.links (url, url_normalized, title) values ('https://d.example/', 'd.example', 'New')`),
+      ).rejects.toThrow();
+      return folder!.share_id;
+    });
+
+    // Still in the database, but its shared folder is no longer public.
+    expect(await rows(`select title from public.links where user_id = $1`, [C])).toEqual([{ title: "Mine" }]);
+    expect(await as(null, () => call(`select public.get_shared_collection($1) as r`, [shareId]))).toBeNull();
+    // Other accounts carry on as before, and can't switch anyone else off.
+    await as(B, async () => {
+      expect(await call(`select public.account_is_active() as r`)).toBe(true);
+      expect(await rows(`select user_id from public.account_status`)).toEqual([]);
+    });
+    await expect(as(null, () => db.query(`select public.deactivate_account()`))).rejects.toThrow();
+  });
+});
+
+describe("email addresses", () => {
+  it("can't be changed once set, but the auth service can still clear its own fields", async () => {
+    // The stand-in auth.users has no email columns, so try the guard on a table shaped like it.
+    await db.exec(`
+      create table public.email_guard_check (id int primary key, email text, email_change text default '');
+      create trigger keep_email_unchanged before update on public.email_guard_check
+        for each row execute function public.keep_email_unchanged();
+      insert into public.email_guard_check (id, email) values (1, 'me@example.com'), (2, null);
+    `);
+    await expect(db.query(`update public.email_guard_check set email = 'new@example.com' where id = 1`)).rejects.toThrow(
+      /can't be changed/,
+    );
+    await expect(db.query(`update public.email_guard_check set email_change = 'new@example.com' where id = 1`)).rejects.toThrow(
+      /can't be changed/,
+    );
+    await db.query(`update public.email_guard_check set email_change = '' where id = 1`); // clearing is fine
+    await db.query(`update public.email_guard_check set email = 'first@example.com' where id = 2`); // first address is fine
+    await db.exec(`drop table public.email_guard_check`);
+  });
+});

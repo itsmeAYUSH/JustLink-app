@@ -151,10 +151,10 @@ export function SelectModeToggle() {
       type="button"
       onClick={selecting ? clear : start}
       aria-pressed={selecting}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none ${
+      className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none ${
         selecting
-          ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-200"
-          : "border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          ? "border-brand/40 bg-brand-soft text-brand-ink"
+          : "border-line bg-surface text-muted hover:bg-subtle hover:text-ink"
       }`}
     >
       {selecting ? <XIcon className="size-4" /> : <CheckSquareIcon className="size-4" />}
@@ -179,10 +179,10 @@ export function SelectCheckbox({ id, title }: { id: string; title: string }) {
       />
       <span
         aria-hidden="true"
-        className={`grid size-5 place-items-center rounded-md border-2 shadow-sm transition peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500/50 peer-focus-visible:ring-offset-1 ${
+        className={`grid size-5 place-items-center rounded-md border-[1.5px] transition peer-focus-visible:ring-2 peer-focus-visible:ring-brand/50 peer-focus-visible:ring-offset-1 ${
           checked
-            ? "border-indigo-600 bg-indigo-600 text-white dark:border-indigo-500 dark:bg-indigo-500"
-            : "border-zinc-300 bg-white/90 text-transparent hover:border-indigo-400 dark:border-zinc-500 dark:bg-zinc-900/80"
+            ? "border-brand bg-brand text-on-brand"
+            : "border-muted/50 bg-surface/95 text-transparent hover:border-brand"
         }`}
       >
         <CheckIcon className="size-3.5" strokeWidth={3} />
@@ -315,7 +315,7 @@ function BulkActionBar({
         {(error || stillBlocked.length > 0) && (
           <div
             role="alert"
-            className="pointer-events-auto flex max-w-xl items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900 shadow-lg motion-safe:animate-fade-up dark:border-amber-400/20 dark:bg-amber-950/90 dark:text-amber-100"
+            className="pointer-events-auto flex max-w-xl items-start gap-2.5 rounded-xl border border-accent/30 bg-accent-soft px-3.5 py-2.5 text-sm text-accent-ink shadow-md motion-safe:animate-fade-up"
           >
             <AlertIcon className="mt-0.5 size-4 shrink-0" />
             {error ?? (
@@ -331,25 +331,25 @@ function BulkActionBar({
         <div
           role="toolbar"
           aria-label="Selected links"
-          className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-zinc-200 bg-white/90 p-1.5 shadow-2xl shadow-zinc-950/15 backdrop-blur-xl motion-safe:animate-fade-up dark:border-zinc-700 dark:bg-zinc-900/90 dark:shadow-black/50"
+          className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-line bg-surface/95 p-1.5 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.25)] backdrop-blur-xl motion-safe:animate-fade-up"
         >
           <button
             type="button"
             onClick={onClose}
             aria-label="Cancel selection"
             title="Cancel (Esc)"
-            className="grid size-9 shrink-0 place-items-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:outline-none dark:hover:bg-zinc-800 dark:hover:text-white"
+            className="grid size-9 shrink-0 place-items-center rounded-xl text-muted transition-colors hover:bg-subtle hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none"
           >
             <XIcon className="size-[18px]" />
           </button>
           <span className="min-w-20 px-2 text-sm font-medium whitespace-nowrap tabular-nums" aria-live="polite">
             {count === 0 ? "Select links" : `${count} selected`}
           </span>
-          <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700" />
+          <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-line" />
           <button
             type="button"
             onClick={allSelected ? onDeselectAll : onSelectAll}
-            className={`${barButton} text-zinc-700 hover:bg-zinc-100 focus-visible:ring-indigo-500/40 dark:text-zinc-200 dark:hover:bg-zinc-800`}
+            className={`${barButton} text-ink hover:bg-subtle focus-visible:ring-brand/40`}
           >
             {allSelected ? (
               "Deselect all"
@@ -364,7 +364,7 @@ function BulkActionBar({
             onClick={() => void openTabs()}
             disabled={count === 0}
             title="Open each selected link in a new tab"
-            className={`${barButton} text-zinc-700 hover:bg-zinc-100 focus-visible:ring-indigo-500/40 dark:text-zinc-200 dark:hover:bg-zinc-800`}
+            className={`${barButton} text-ink hover:bg-subtle focus-visible:ring-brand/40`}
           >
             <ExternalLinkIcon className="size-4" />
             {stillBlocked.length > 0 ? `Open ${stillBlocked.length} more` : "Open"}
@@ -376,13 +376,13 @@ function BulkActionBar({
                 ids={ids}
                 variant="bar"
                 onMoved={onDone}
-                className={`${barButton} text-zinc-700 hover:bg-zinc-100 focus-visible:ring-indigo-500/40 dark:text-zinc-200 dark:hover:bg-zinc-800`}
+                className={`${barButton} text-ink hover:bg-subtle focus-visible:ring-brand/40`}
               />
               <button
                 type="button"
                 onClick={moveToTrash}
                 disabled={count === 0 || busy}
-                className={`${barButton} bg-rose-600 text-white shadow-sm hover:bg-rose-500 focus-visible:ring-rose-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900`}
+                className={`${barButton} text-danger hover:bg-danger-soft focus-visible:ring-danger/40`}
               >
                 {working ? <SpinnerIcon className="size-4" /> : <TrashIcon className="size-4" />}
                 Move to Trash
@@ -394,7 +394,7 @@ function BulkActionBar({
                 type="button"
                 onClick={restore}
                 disabled={count === 0 || busy}
-                className={`${barButton} text-indigo-700 hover:bg-indigo-50 focus-visible:ring-indigo-500/40 dark:text-indigo-200 dark:hover:bg-indigo-500/10`}
+                className={`${barButton} text-brand-ink hover:bg-brand-soft focus-visible:ring-brand/40`}
               >
                 {working ? <SpinnerIcon className="size-4" /> : <RestoreIcon className="size-4" />}
                 Restore
@@ -407,7 +407,7 @@ function BulkActionBar({
                 }}
                 disabled={count === 0 || busy}
                 aria-haspopup="dialog"
-                className={`${barButton} bg-rose-600 text-white shadow-sm hover:bg-rose-500 focus-visible:ring-rose-500/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900`}
+                className={`${barButton} bg-danger text-on-brand shadow-sm hover:bg-danger/90 focus-visible:ring-danger/50 focus-visible:ring-offset-2`}
               >
                 <TrashIcon className="size-4" />
                 Delete forever
@@ -428,14 +428,14 @@ function BulkActionBar({
             <ul className="space-y-1">
               {shown.map((item) => (
                 <li key={item.id} className="flex gap-2">
-                  <span aria-hidden="true" className="text-zinc-400">
+                  <span aria-hidden="true" className="text-muted">
                     •
                   </span>
                   <span className="line-clamp-1">{item.title}</span>
                 </li>
               ))}
               {count > shown.length && (
-                <li className="pl-4 font-normal text-zinc-500 dark:text-zinc-400">and {count - shown.length} more</li>
+                <li className="pl-4 font-normal text-muted">and {count - shown.length} more</li>
               )}
             </ul>
           }

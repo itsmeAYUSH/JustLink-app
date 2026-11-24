@@ -23,6 +23,18 @@ export type AuthState = {
 const MIN_PASSWORD_LENGTH = 6;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/** Shown when someone signs in to an account that was deleted. */
+const ACCOUNT_DELETED = {
+  title: "This account was deleted",
+  message: "It can't be signed in to any more.",
+} as const;
+
+/** False for an account that was deleted (switched off). True if that can't be checked yet. */
+async function accountIsActive(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
+  const { data } = await supabase.rpc("account_is_active");
+  return data !== false;
+}
+
 /** Only allow same-site relative paths after login. */
 function safeNext(value: FormDataEntryValue | null): string {
   const next = typeof value === "string" ? value : "";
@@ -127,6 +139,12 @@ export async function authenticate(_prev: AuthState, formData: FormData): Promis
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { status: "error", ...describeError(error, mode), email };
+
+  // A deleted account is only switched off, so its password still works: turn it away.
+  if (!(await accountIsActive(supabase))) {
+    await supabase.auth.signOut();
+    return { status: "error", ...ACCOUNT_DELETED, email };
+  }
 
   redirect(next);
 }

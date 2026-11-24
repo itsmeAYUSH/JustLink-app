@@ -5,7 +5,14 @@ import { getSupabaseEnv } from "./env";
 
 // /s/<share_id> are public shared collections. /api/extension answers signed-out
 // requests itself, with JSON the extension can read, instead of a redirect to /login.
-const PUBLIC_PATHS = ["/login", "/auth", "/s", "/api/extension"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth",
+  "/s",
+  "/api/extension",
+  // The design preview with sample data (app/design) only exists in development.
+  ...(process.env.NODE_ENV === "production" ? [] : ["/design"]),
+];
 
 /**
  * Runs on every request (see /proxy.ts): refreshes the Supabase session cookie

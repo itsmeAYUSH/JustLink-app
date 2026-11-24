@@ -5,14 +5,13 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { cache } from "react";
 import { refreshLink, restoreLink, trashLinkAndGoHome } from "@/app/actions";
+import { AppFrame } from "@/components/app-frame";
 import { DeleteLinkButton } from "@/components/delete-link-button";
 import { FallbackImage } from "@/components/fallback-image";
 import { LinkActions } from "@/components/link-actions";
 import { Favicon, ImagePlaceholder } from "@/components/link-card";
 import { LinkEditor } from "@/components/link-editor";
-import { SiteHeader } from "@/components/site-header";
 import { FolderSession } from "@/components/vault";
-import { profileFromUser } from "@/lib/profile";
 import { SubmitButton } from "@/components/submit-button";
 import { TagList } from "@/components/tag-list";
 import {
@@ -51,7 +50,7 @@ function ExternalLink({ href }: { href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="break-all text-blue-600 hover:underline dark:text-blue-400"
+      className="break-all text-brand hover:underline"
     >
       {href}
     </a>
@@ -62,7 +61,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   if (children === null || children === undefined || children === "") return null;
   return (
     <div className="grid gap-1 py-2.5 sm:grid-cols-[10rem_1fr] sm:gap-4">
-      <dt className="text-sm text-zinc-500">{label}</dt>
+      <dt className="text-sm text-muted">{label}</dt>
       <dd className="min-w-0 text-sm">{children}</dd>
     </div>
   );
@@ -72,9 +71,8 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
   const { id } = await params;
   const supabase = await createClient();
   const hideImages = (await cookies()).get(HIDE_IMAGES_COOKIE)?.value === "1";
-  const [link, { data: userData }, { data: collections }] = await Promise.all([
+  const [link, { data: collections }] = await Promise.all([
     getLink(id),
-    supabase.auth.getUser(),
     supabase.from("collections").select("id, name, icon, is_locked").order("name"),
   ]);
   if (!link) notFound();
@@ -87,9 +85,14 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
     link.image_width && link.image_height ? `${link.image_width} × ${link.image_height}` : null;
 
   return (
-    <>
-      <SiteHeader user={profileFromUser(userData.user)} />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+    <AppFrame
+      header={
+        <span className="truncate text-base font-semibold tracking-tight sm:text-lg">
+          {link.site_name ?? hostname(link.url)}
+        </span>
+      }
+    >
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pt-4 pb-8 sm:pt-5">
         {/* A link in a locked folder: this page counts as inside the folder, so it stays open here. */}
         {collection?.is_locked && <FolderSession key={collection.id} folderId={collection.id} />}
         <Link
@@ -102,7 +105,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
                   ? "/?filter=archived"
                   : "/"
           }
-          className="mb-6 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+          className="mb-4 inline-block text-sm text-muted hover:text-ink"
         >
           ←{" "}
           {link.deleted_at
@@ -117,7 +120,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
         {link.deleted_at && (
           <div
             role="status"
-            className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-400/20 dark:bg-amber-950/40 dark:text-amber-100"
+            className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface p-4 text-sm text-muted"
           >
             <p className="min-w-60 flex-1">
               <strong className="font-semibold">This link is in the Trash.</strong> {trashCountdown(link.deleted_at)} (
@@ -130,8 +133,8 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
           </div>
         )}
 
-        <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="aspect-[1.91/1] max-h-[420px] w-full overflow-hidden border-b border-zinc-100 dark:border-zinc-800">
+        <article className="overflow-hidden rounded-xl border border-line bg-surface">
+          <div className="aspect-[1.91/1] max-h-[420px] w-full overflow-hidden border-b border-line">
             {hideImages ? (
               <ImagePlaceholder link={link} />
             ) : (
@@ -145,33 +148,33 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
           </div>
 
           <div className="space-y-4 p-6">
-            <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <div className="flex items-center gap-2 text-sm text-muted">
               <Favicon src={link.favicon} className="size-5" />
               <span>{link.site_name ?? hostname(link.url)}</span>
               {link.is_archived && (
-                <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800">Archived</span>
+                <span className="rounded-md bg-subtle px-1.5 py-0.5 text-xs">Archived</span>
               )}
               <LinkActions link={link} className="ml-auto" />
             </div>
 
             <h1 className="text-2xl font-semibold leading-tight tracking-tight">{displayTitle(link)}</h1>
 
-            {description && <p className="leading-relaxed text-zinc-600 dark:text-zinc-300">{description}</p>}
+            {description && <p className="leading-relaxed text-muted">{description}</p>}
 
             {link.note && (
-              <p className="whitespace-pre-line rounded-lg border-l-4 border-amber-300 bg-amber-50/60 p-3 text-sm dark:border-amber-700 dark:bg-amber-950/40">
+              <p className="whitespace-pre-line rounded-lg border-l-2 border-brand/50 bg-subtle p-3 text-sm">
                 {link.note}
               </p>
             )}
 
             {link.fetch_status === "pending" && (
-              <p className="rounded-lg bg-sky-50 p-3 text-sm text-sky-800 dark:bg-sky-950 dark:text-sky-300">
+              <p className="rounded-lg bg-subtle p-3 text-sm text-muted">
                 The preview for this link is still being fetched.
               </p>
             )}
 
             {link.fetch_status === "failed" && link.fetch_error && (
-              <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              <p className="rounded-lg bg-subtle p-3 text-sm text-muted">
                 Could not fetch a preview: {link.fetch_error}
               </p>
             )}
@@ -183,7 +186,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="inline-flex items-center rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand hover:bg-brand/90"
               >
                 Visit site ↗
               </a>
@@ -207,7 +210,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
           </div>
         </article>
 
-        <section className="mt-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="mt-8 rounded-xl border border-line bg-surface p-6">
           <h2 className="mb-4 font-semibold">Edit</h2>
           {/* Pass only what the form needs: the client bundle shouldn't receive meta_tags etc. */}
           <LinkEditor
@@ -226,9 +229,9 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
           />
         </section>
 
-        <section className="mt-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="mt-8 rounded-xl border border-line bg-surface p-6">
           <h2 className="mb-2 font-semibold">Details</h2>
-          <dl className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <dl className="divide-y divide-line">
             <Row label="URL">
               <ExternalLink href={link.url} />
             </Row>
@@ -250,7 +253,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
               {themeColor ? (
                 <span className="inline-flex items-center gap-2">
                   <span
-                    className="size-4 rounded border border-zinc-300 dark:border-zinc-600"
+                    className="size-4 rounded border border-line"
                     style={{ backgroundColor: themeColor }}
                   />
                   <code className="font-mono text-xs">{themeColor}</code>
@@ -262,7 +265,7 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
                 <div className="space-y-1">
                   <ExternalLink href={link.image} />
                   {(imageSize || link.image_alt) && (
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted">
                       {[imageSize, link.image_alt && `alt: “${link.image_alt}”`].filter(Boolean).join(" · ")}
                     </p>
                   )}
@@ -283,24 +286,24 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
           </dl>
         </section>
 
-        <section className="mt-8 rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="mt-8 rounded-xl border border-line bg-surface">
           <details open={metaTags.length <= 30}>
             <summary className="cursor-pointer select-none p-6 font-semibold">
-              All meta tags <span className="font-normal text-zinc-500">({metaTags.length})</span>
+              All meta tags <span className="font-normal text-muted">({metaTags.length})</span>
             </summary>
             {metaTags.length > 0 ? (
-              <div className="overflow-x-auto border-t border-zinc-100 dark:border-zinc-800">
+              <div className="overflow-x-auto border-t border-line">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-950">
+                  <thead className="bg-subtle text-xs tracking-wide text-muted uppercase">
                     <tr>
                       <th className="px-6 py-2 font-medium">Name / property</th>
                       <th className="px-6 py-2 font-medium">Content</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-y divide-line">
                     {metaTags.map((tag, index) => (
                       <tr key={`${tag.key}-${index}`} className="align-top">
-                        <td className="whitespace-nowrap px-6 py-2 font-mono text-xs text-zinc-500">{tag.key}</td>
+                        <td className="whitespace-nowrap px-6 py-2 font-mono text-xs text-muted">{tag.key}</td>
                         <td className="break-all px-6 py-2">{tag.value}</td>
                       </tr>
                     ))}
@@ -308,13 +311,13 @@ export default async function LinkPage({ params }: PageProps<"/links/[id]">) {
                 </table>
               </div>
             ) : (
-              <p className="border-t border-zinc-100 px-6 py-4 text-sm text-zinc-500 dark:border-zinc-800">
+              <p className="border-t border-line px-6 py-4 text-sm text-muted">
                 This page has no meta tags.
               </p>
             )}
           </details>
         </section>
       </main>
-    </>
+    </AppFrame>
   );
 }

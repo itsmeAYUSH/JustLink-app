@@ -53,12 +53,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           // Sits above the selection bar while that is showing.
-          className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-3 rounded-2xl bg-zinc-900 py-2 pr-2 pl-4 text-sm text-white shadow-2xl shadow-zinc-950/30 motion-safe:animate-fade-up [body:has([data-selecting])_&]:bottom-24 dark:bg-zinc-800 dark:ring-1 dark:ring-white/10"
+          className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-3 rounded-xl bg-ink py-2 pr-2 pl-4 text-sm text-canvas shadow-lg motion-safe:animate-fade-up [body:has([data-selecting])_&]:bottom-24"
         >
           {toast.tone === "error" ? (
-            <AlertIcon className="size-4 shrink-0 text-rose-400" />
+            <AlertIcon className="size-4 shrink-0 text-danger-soft" />
           ) : (
-            <CheckIcon className="size-4 shrink-0 text-emerald-400" strokeWidth={2.5} />
+            <CheckIcon className="size-4 shrink-0 text-brand-soft" strokeWidth={2.5} />
           )}
           <span className="min-w-0 truncate font-medium">{toast.message}</span>
           {toast.action && (
@@ -66,7 +66,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               type="button"
               onClick={runAction}
               disabled={running}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold text-indigo-300 transition-colors hover:bg-white/10 hover:text-indigo-200 focus-visible:ring-2 focus-visible:ring-indigo-400/60 focus-visible:outline-none disabled:opacity-70"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold text-brand-soft transition-colors hover:bg-canvas/10 focus-visible:ring-2 focus-visible:ring-canvas/40 focus-visible:outline-none disabled:opacity-70"
             >
               {running && <SpinnerIcon className="size-3.5" />}
               {toast.action.label}
@@ -76,7 +76,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             type="button"
             onClick={() => setToast(null)}
             aria-label="Dismiss"
-            className="grid size-7 shrink-0 place-items-center rounded-lg text-zinc-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:outline-none"
+            className="grid size-7 shrink-0 place-items-center rounded-lg text-canvas/60 transition-colors hover:bg-canvas/10 hover:text-canvas focus-visible:ring-2 focus-visible:ring-canvas/40 focus-visible:outline-none"
           >
             <XIcon className="size-3.5" />
           </button>
